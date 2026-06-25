@@ -1,7 +1,6 @@
 package me.bluegecko.createschedulesynchronizer
 
-import me.bluegecko.createschedulesynchronizer.block.ModBlocks
-import net.minecraft.client.Minecraft
+import me.bluegecko.createschedulesynchronizer.item.ModItems
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.fml.common.Mod
@@ -12,7 +11,6 @@ import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import thedarkcolour.kotlinforforge.neoforge.forge.MOD_BUS
-import thedarkcolour.kotlinforforge.neoforge.forge.runForDist
 
 /**
  * Main mod class.
@@ -28,20 +26,7 @@ object Createschedulesynchronizer {
     val LOGGER: Logger = LogManager.getLogger(ID)
 
     init {
-        LOGGER.log(Level.INFO, "Hello world!")
-
-        // Register the KDeferredRegister to the mod-specific event bus
-        ModBlocks.REGISTRY.register(MOD_BUS)
-
-        val obj = runForDist(clientTarget = {
-            MOD_BUS.addListener(::onClientSetup)
-            Minecraft.getInstance()
-        }, serverTarget = {
-            MOD_BUS.addListener(::onServerSetup)
-            "test"
-        })
-
-        println(obj)
+        ModItems.REGISTRY.register(MOD_BUS)
     }
 
     /**

@@ -16,6 +16,10 @@ repositories {
         url = 'https://thedarkcolour.github.io/KotlinForForge/'
         content { includeGroup "thedarkcolour" }
     }
+    maven {
+        name = 'Create'
+        url = 'https://maven.createmod.net'
+    }
 }
 
 base {
@@ -104,6 +108,9 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 dependencies {
     implementation 'thedarkcolour:kotlinforforge-neoforge:5.3.0'
+    implementation('com.simibubi.create:create-1.21.1:6.0.9-216') {
+        transitive = false
+    }
 
     // Example mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
