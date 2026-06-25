@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "me.bluegecko.createschedulesynchronizer.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "ScheduleEditPacketMixin",
+    "ConductorBlockIterationBehaviorMixin",
+    "StationBlockEntityMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
