@@ -48,27 +48,29 @@ public record RenameScheduleSyncIdPayload(UUID syncId, String name) implements C
         }
 
         context.enqueueWork(() -> {
+            ScheduleSyncSavedData data = ScheduleSyncSavedData.get(player.serverLevel());
+
+            if (!data.contains(payload.syncId())) {
+                player.displayClientMessage(
+                        Component.literal("Selected schedule no longer exists."),
+                        true
+                );
+                return;
+            }
+
+            data.setDisplayName(payload.syncId(), payload.name());
+
+            String displayName = data.getDisplayName(payload.syncId());
+
             ItemStack stack = player.getMainHandItem();
             UUID currentId = SynchronizedScheduleItem.getSyncId(stack);
 
-            if (currentId == null) {
-                player.displayClientMessage(
-                        Component.literal("This schedule is not linked."),
-                        true
-                );
-                return;
+            if (displayName != null && payload.syncId().equals(currentId)) {
+                SynchronizedScheduleItem.setSyncName(stack, displayName);
             }
 
-            if (!currentId.equals(payload.syncId())) {
-                player.displayClientMessage(
-                        Component.literal("Selected schedule is no longer linked."),
-                        true
-                );
-                return;
-            }
-
-            ScheduleSyncSavedData.get(player.serverLevel()).setDisplayName(payload.syncId(), payload.name());
             ScheduleSyncNetworkHelper.sendSyncPanelState(player);
+
             player.displayClientMessage(
                     Component.literal("Schedule name updated."),
                     true

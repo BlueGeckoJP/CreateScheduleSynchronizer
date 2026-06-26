@@ -68,12 +68,20 @@ class SynchronizedScheduleItem(properties: Properties) : ScheduleItem(properties
         val syncId = getSyncId(stack)
 
         if (syncId != null) {
+            val syncName = getSyncName(stack) ?: "Linked Schedule"
+
             tooltip.add(
-                Component.literal("Sync ID: $syncId").withStyle(ChatFormatting.DARK_GRAY)
+                Component.literal("Sync: $syncName").withStyle(ChatFormatting.DARK_GRAY)
             )
+
+            if (flag.isAdvanced) {
+                tooltip.add(
+                    Component.literal("Sync UUID: $syncId").withStyle(ChatFormatting.GRAY)
+                )
+            }
         } else if (flag.isAdvanced) {
             tooltip.add(
-                Component.literal("Sync ID: <not assigned>").withStyle(ChatFormatting.GRAY)
+                Component.literal("Sync: <not linked>").withStyle(ChatFormatting.GRAY)
             )
         }
     }
@@ -92,11 +100,27 @@ class SynchronizedScheduleItem(properties: Properties) : ScheduleItem(properties
         @JvmStatic
         fun clearSyncId(stack: ItemStack) {
             stack.remove(ModDataComponents.SYNC_ID.get())
+            stack.remove(ModDataComponents.SYNC_NAME.get())
         }
 
         @JvmStatic
         fun isLinked(stack: ItemStack): Boolean {
             return getSyncId(stack) != null
+        }
+
+        @JvmStatic
+        fun getSyncName(stack: ItemStack): String? {
+            return stack.get(ModDataComponents.SYNC_NAME.get())
+        }
+
+        @JvmStatic
+        fun setSyncName(stack: ItemStack, syncName: String) {
+            stack.set(ModDataComponents.SYNC_NAME.get(), syncName)
+        }
+
+        @JvmStatic
+        fun clearSyncName(stack: ItemStack) {
+            stack.remove(ModDataComponents.SYNC_NAME.get())
         }
     }
 }

@@ -142,9 +142,15 @@ object ScheduleSyncManager {
 
         val syncId = UUID.randomUUID()
 
+        val store = ScheduleSyncSavedData.get(level)
+
+        store.putScheduleTag(syncId, scheduleTag.copy())
+
+        val displayName = store.getDisplayName(syncId) ?: "Schedule ${syncId.toString().substring(0, 8)}"
+
+        SynchronizedScheduleItem.setSyncName(stack, displayName)
         SynchronizedScheduleItem.setSyncId(stack, syncId)
         stack.set(AllDataComponents.TRAIN_SCHEDULE, scheduleTag.copy())
-        ScheduleSyncSavedData.get(level).putScheduleTag(syncId, scheduleTag.copy())
 
         return NewIdResult(syncId, NewIdStatus.CREATED)
     }
@@ -181,9 +187,14 @@ object ScheduleSyncManager {
             return LinkResult.NOT_SYNCHRONIZED_SCHEDULE
         }
 
-        val storedSchedule = ScheduleSyncSavedData.get(level).getScheduleTag(syncId) ?: return LinkResult.NOT_FOUND
+        val store = ScheduleSyncSavedData.get(level)
+
+        val storedSchedule = store.getScheduleTag(syncId) ?: return LinkResult.NOT_FOUND
+
+        val displayName = store.getDisplayName(syncId) ?: "Schedule ${syncId.toString().substring(0, 8)}"
 
         SynchronizedScheduleItem.setSyncId(stack, syncId)
+        SynchronizedScheduleItem.setSyncName(stack, displayName)
         stack.set(AllDataComponents.TRAIN_SCHEDULE, storedSchedule.copy())
 
         return LinkResult.LINKED
@@ -217,10 +228,15 @@ object ScheduleSyncManager {
             return LinkWithTagResult(LinkResult.NOT_SYNCHRONIZED_SCHEDULE, null)
         }
 
-        val storedSchedule = ScheduleSyncSavedData.get(level).getScheduleTag(syncId) ?: return LinkWithTagResult(
+        val store = ScheduleSyncSavedData.get(level)
+
+        val storedSchedule = store.getScheduleTag(syncId) ?: return LinkWithTagResult(
             LinkResult.NOT_FOUND, null)
 
+        val displayName = store.getDisplayName(syncId) ?: "Schedule ${syncId.toString().substring(0, 8)}"
+
         SynchronizedScheduleItem.setSyncId(stack, syncId)
+        SynchronizedScheduleItem.setSyncName(stack, displayName)
         stack.set(AllDataComponents.TRAIN_SCHEDULE, storedSchedule.copy())
 
         return LinkWithTagResult(LinkResult.LINKED, storedSchedule.copy())

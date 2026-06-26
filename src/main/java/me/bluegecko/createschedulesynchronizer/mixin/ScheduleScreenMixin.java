@@ -619,7 +619,7 @@ public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
             int index = css$idScrollOffset + row;
             int rowY = listY + row * css$idRowHeight();
 
-            if (button == 0 && !css$isInside(
+            if (!css$isInside(
                     mouseX,
                     mouseY,
                     listX,
