@@ -1,5 +1,6 @@
 package me.bluegecko.createschedulesynchronizer
 
+import me.bluegecko.createschedulesynchronizer.data.ModDataComponents
 import me.bluegecko.createschedulesynchronizer.item.ModItems
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
@@ -26,6 +27,7 @@ object Createschedulesynchronizer {
     val LOGGER: Logger = LogManager.getLogger(ID)
 
     init {
+        ModDataComponents.REGISTRY.register(MOD_BUS)
         ModItems.REGISTRY.register(MOD_BUS)
     }
 
