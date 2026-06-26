@@ -6,16 +6,22 @@ import com.simibubi.create.content.trains.schedule.ScheduleRuntime;
 import com.simibubi.create.content.trains.station.StationBlockEntity;
 import com.tterrag.registrate.util.entry.ItemEntry;
 import me.bluegecko.createschedulesynchronizer.compat.ScheduleCompatibility;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.function.Predicate;
 
 @Mixin(value = StationBlockEntity.class, remap = false)
 public abstract class StationBlockEntityMixin {
+    @Shadow
+    public abstract ItemStack getAutoSchedule();
+
     /**
      * Allow station depots to accept synchronized train schedule
      */
@@ -31,6 +37,18 @@ public abstract class StationBlockEntityMixin {
             Predicate<ItemStack> ignored
     ) {
         return depot.onlyAccepts(ScheduleCompatibility::isSchedule);
+    }
+
+    @Inject(method = "applyAutoSchedule", at = @At("HEAD"))
+    private void css$syncBeforeStationScheduleRead(CallbackInfo callback) {
+        Object self = this;
+
+        if (((StationBlockEntity) self).getLevel() instanceof ServerLevel serverLevel) {
+            ScheduleCompatibility.syncFromStoreIfPossible(
+                    getAutoSchedule(),
+                    serverLevel
+            );
+        }
     }
 
     /**
@@ -49,9 +67,6 @@ public abstract class StationBlockEntityMixin {
     ) {
         return ScheduleCompatibility.isSchedule(stack);
     }
-
-    @Shadow
-    public abstract ItemStack getAutoSchedule();
 
     @Redirect(
             method = "applyAutoSchedule",

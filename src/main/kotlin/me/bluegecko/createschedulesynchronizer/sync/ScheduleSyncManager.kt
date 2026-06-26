@@ -21,6 +21,7 @@ object ScheduleSyncManager {
      * - If there is no sync_id:
      *   do nothing.
      */
+    @JvmStatic
     fun syncItemFromStoreOrInitialize(stack: ItemStack, level: ServerLevel): Boolean {
         val syncId = SynchronizedScheduleItem.getSyncId(stack) ?: return false
         val store = ScheduleSyncSavedData.get(level)
@@ -40,10 +41,21 @@ object ScheduleSyncManager {
         return false
     }
 
+    @JvmStatic
+    fun syncItemFromStore(stack: ItemStack, level: ServerLevel): Boolean {
+        val syncId = SynchronizedScheduleItem.getSyncId(stack) ?: return false
+        val storeSchedule = ScheduleSyncSavedData.get(level).getScheduleTag(syncId) ?: return false
+
+        stack.set(AllDataComponents.TRAIN_SCHEDULE, storeSchedule.copy())
+        return true
+    }
+
+    @JvmStatic
     fun saveMainHandScheduleToStore(player: ServerPlayer): SaveResult {
         return saveHeldScheduleToStore(player, InteractionHand.MAIN_HAND)
     }
 
+    @JvmStatic
     fun saveHeldScheduleToStore(
         player: ServerPlayer,
         hand: InteractionHand
@@ -54,6 +66,7 @@ object ScheduleSyncManager {
         )
     }
 
+    @JvmStatic
     fun saveItemToStore(
         stack: ItemStack,
         level: ServerLevel
