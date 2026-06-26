@@ -1,11 +1,14 @@
 package me.bluegecko.createschedulesynchronizer.mixin;
 
 import com.simibubi.create.content.logistics.depot.DepotBehaviour;
+import com.simibubi.create.content.trains.schedule.Schedule;
+import com.simibubi.create.content.trains.schedule.ScheduleRuntime;
 import com.simibubi.create.content.trains.station.StationBlockEntity;
 import com.tterrag.registrate.util.entry.ItemEntry;
 import me.bluegecko.createschedulesynchronizer.compat.ScheduleCompatibility;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
@@ -45,5 +48,32 @@ public abstract class StationBlockEntityMixin {
             ItemStack stack
     ) {
         return ScheduleCompatibility.isSchedule(stack);
+    }
+
+    @Shadow
+    public abstract ItemStack getAutoSchedule();
+
+    @Redirect(
+            method = "applyAutoSchedule",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lcom/simibubi/create/content/trains/schedule/"
+                            + "ScheduleRuntime;"
+                            + "setSchedule("
+                            + "Lcom/simibubi/create/content/trains/schedule/Schedule;"
+                            + "Z)V"
+            )
+    )
+    private void css$rememberStationScheduleSource(
+            ScheduleRuntime runtime,
+            Schedule schedule,
+            boolean auto
+    ) {
+        ScheduleCompatibility.rememberSource(
+                runtime,
+                getAutoSchedule()
+        );
+
+        runtime.setSchedule(schedule, auto);
     }
 }
