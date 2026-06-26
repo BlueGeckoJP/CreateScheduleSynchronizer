@@ -42,7 +42,7 @@ class ScheduleSyncSavedData : SavedData() {
 
     fun getSchedule(id: UUID, registries: HolderLookup.Provider): Schedule? {
         val tag = schedules[id] ?: return null
-        return Schedule.fromTag(tag.copy() as HolderLookup.Provider?, registries as CompoundTag?)
+        return Schedule.fromTag(registries, tag)
     }
 
     fun putSchedule(id: UUID, schedule: Schedule, registries: HolderLookup.Provider) {
