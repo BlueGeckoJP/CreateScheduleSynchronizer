@@ -35,6 +35,16 @@ public abstract class ScheduleScreenMixin {
     @Unique
     private static final int CSS_BUTTON_HEIGHT = 18;
 
+    @Unique
+    private int css$idScrollOffset;
+
+    @Unique
+    private void css$clampIdScrollOffset() {
+        int maxRows = 4;
+        int maxOffset = Math.max(0, ScheduleSyncClientState.getIds().size() - maxRows);
+        css$idScrollOffset = Math.clamp(css$idScrollOffset, 0, maxOffset);
+    }
+
     @Shadow
     private Schedule schedule;
 
@@ -44,6 +54,7 @@ public abstract class ScheduleScreenMixin {
     @Inject(method = "init", at = @At("TAIL"))
     private void css$requestSyncIds(CallbackInfo callback) {
         ScheduleSyncClientState.clear();
+        css$idScrollOffset = 0;
         PacketDistributor.sendToServer(new RequestScheduleSyncIdsPayload());
     }
 
@@ -60,6 +71,50 @@ public abstract class ScheduleScreenMixin {
         );
 
         init();
+    }
+
+    @Inject(method = "mouseScrolled", at = @At("HEAD"), cancellable = true)
+    private void css$scrollSyncIdList(
+            double mouseX,
+            double mouseY,
+            double scrollX,
+            double scrollY,
+            CallbackInfoReturnable<Boolean> callback
+    ) {
+        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
+
+        int listX = css$idListX(screen);
+        int listY = css$idListY(screen);
+        int maxRows = 4;
+        int listHeight = maxRows * css$idRowHeight();
+
+        if (!css$isInside(
+                mouseX,
+                mouseY,
+                listX,
+                listY,
+                css$idRowWidth(),
+                listHeight
+        )) {
+            return;
+        }
+
+        List<UUID> ids = ScheduleSyncClientState.getIds();
+        int maxOffset = Math.max(0, ids.size() - maxRows);
+
+        if (maxOffset <= 0) {
+            return;
+        }
+
+        if (scrollY < 0) {
+            css$idScrollOffset++;
+        } else if (scrollY > 0) {
+            css$idScrollOffset--;
+        }
+
+        css$idScrollOffset = Math.clamp(css$idScrollOffset, 0, maxOffset);
+
+        callback.setReturnValue(true);
     }
 
     @Inject(method = "render", at = @At("TAIL"))
@@ -221,6 +276,7 @@ public abstract class ScheduleScreenMixin {
                 0xFFFFFFFF
         );
 
+        css$clampIdScrollOffset();
         List<UUID> ids = ScheduleSyncClientState.getIds();
 
         graphics.drawString(
@@ -234,11 +290,14 @@ public abstract class ScheduleScreenMixin {
 
         int listX = css$idListX(screen);
         int listY = css$idListY(screen);
-        int maxRows = 4;
 
-        for (int i = 0; i < Math.min(ids.size(), maxRows); i++) {
-            UUID id = ids.get(i);
-            int rowY = listY + i * css$idRowHeight();
+        int maxRows = 4;
+        int visibleCount = Math.clamp(ids.size() - css$idScrollOffset, 0, maxRows);
+
+        for (int row = 0; row < visibleCount; row++) {
+            int index = css$idScrollOffset + row;
+            UUID id = ids.get(index);
+            int rowY = listY + row * css$idRowHeight();
 
             boolean selected = id.equals(currentId);
             boolean idHovered = css$isInside(
@@ -273,11 +332,13 @@ public abstract class ScheduleScreenMixin {
         }
 
         if (ids.size() > maxRows) {
+            String scrollText = (css$idScrollOffset + 1) + "-" + (css$idScrollOffset + visibleCount) + "/" + ids.size();
+
             graphics.drawString(
                     minecraft.font,
-                    Component.literal("+" + (ids.size() - maxRows) + " more"),
-                    listX,
-                    listY + maxRows * css$idRowHeight(),
+                    Component.literal(scrollText),
+                    panelX + CSS_PANEL_WIDTH - 44,
+                    panelY + 112,
                     0xFF808080,
                     false
             );
@@ -352,10 +413,13 @@ public abstract class ScheduleScreenMixin {
 
         int listX = css$idListX(screen);
         int listY = css$idListY(screen);
-        int maxRows = 4;
 
-        for (int i = 0; i < Math.min(ids.size(), maxRows); i++) {
-            int rowY = listY + i * css$idRowHeight();
+        int maxRows = 4;
+        int visibleCount = Math.clamp(ids.size() - css$idScrollOffset, 0, maxRows);
+
+        for (int row = 0; row < visibleCount; row++) {
+            int index = css$idScrollOffset + row;
+            int rowY = listY + row * css$idRowHeight();
 
             if (!css$isInside(
                     mouseX,
@@ -368,7 +432,7 @@ public abstract class ScheduleScreenMixin {
                 continue;
             }
 
-            UUID selectedId = ids.get(i);
+            UUID selectedId = ids.get(index);
 
             PacketDistributor.sendToServer(new LinkScheduleSyncIdPayload(selectedId));
 
