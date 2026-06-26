@@ -144,4 +144,40 @@ object ScheduleSyncManager {
         CREATED,
         NOT_SYNCHRONIZED_SCHEDULE,
     }
+
+    @JvmStatic
+    fun linkMainHandToScheduleId(
+        player: ServerPlayer,
+        syncId: UUID,
+    ): LinkResult {
+        return linkItemToScheduleId(
+            stack = player.mainHandItem,
+            level = player.serverLevel(),
+            syncId = syncId,
+        )
+    }
+
+    @JvmStatic
+    fun linkItemToScheduleId(
+        stack: ItemStack,
+        level: ServerLevel,
+        syncId: UUID,
+    ): LinkResult {
+        if (stack.item !is SynchronizedScheduleItem) {
+            return LinkResult.NOT_SYNCHRONIZED_SCHEDULE
+        }
+
+        val storedSchedule = ScheduleSyncSavedData.get(level).getScheduleTag(syncId) ?: return LinkResult.NOT_FOUND
+
+        SynchronizedScheduleItem.setSyncId(stack, syncId)
+        stack.set(AllDataComponents.TRAIN_SCHEDULE, storedSchedule.copy())
+
+        return LinkResult.LINKED
+    }
+
+    enum class LinkResult {
+        LINKED,
+        NOT_FOUND,
+        NOT_SYNCHRONIZED_SCHEDULE,
+    }
 }

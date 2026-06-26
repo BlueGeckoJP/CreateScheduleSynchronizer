@@ -3,6 +3,7 @@ package me.bluegecko.createschedulesynchronizer.mixin;
 import com.simibubi.create.content.trains.schedule.Schedule;
 import com.simibubi.create.content.trains.schedule.ScheduleScreen;
 import me.bluegecko.createschedulesynchronizer.client.ScheduleSyncClientState;
+import me.bluegecko.createschedulesynchronizer.network.LinkScheduleSyncIdPayload;
 import me.bluegecko.createschedulesynchronizer.network.NewScheduleSyncIdPayload;
 import me.bluegecko.createschedulesynchronizer.network.RequestScheduleSyncIdsPayload;
 import me.bluegecko.createschedulesynchronizer.network.SaveScheduleSyncPayload;
@@ -166,19 +167,41 @@ public abstract class ScheduleScreenMixin {
                 false
         );
 
-        int listY = panelY + 88;
+        int listX = css$idListX(screen);
+        int listY = css$idListY(screen);
         int maxRows = 4;
 
         for (int i = 0; i < Math.min(ids.size(), maxRows); i++) {
             UUID id = ids.get(i);
+            int rowY = listY + i * css$idRowHeight();
+
+            boolean idHovered = css$isInside(
+                    mouseX,
+                    mouseY,
+                    listX,
+                    rowY,
+                    css$idRowWidth(),
+                    css$idRowHeight()
+            );
+
+            if (idHovered) {
+                graphics.fill(
+                        listX - 2,
+                        rowY - 1,
+                        listX + css$idRowWidth(),
+                        rowY + css$idRowHeight(),
+                        0x553E6A9E
+                );
+            }
+
             String text = id.toString().substring(0, 8);
 
             graphics.drawString(
                     minecraft.font,
                     Component.literal(text),
-                    panelX + 8,
-                    listY + i * 10,
-                    0xFFB0B0B0,
+                    listX,
+                    rowY,
+                    idHovered ? 0xFFFFFFFF : 0xFFB0B0B0,
                     false
             );
         }
@@ -187,8 +210,8 @@ public abstract class ScheduleScreenMixin {
             graphics.drawString(
                     minecraft.font,
                     Component.literal("+" + (ids.size() - maxRows) + " more"),
-                    panelX + 8,
-                    listY + maxRows * 10,
+                    listX,
+                    listY + maxRows * css$idRowHeight(),
                     0xFF808080,
                     false
             );
@@ -242,6 +265,35 @@ public abstract class ScheduleScreenMixin {
             PacketDistributor.sendToServer(new NewScheduleSyncIdPayload(scheduleTag));
             callback.setReturnValue(true);
         }
+
+        List<UUID> ids = ScheduleSyncClientState.getIds();
+
+        int listX = css$idListX(screen);
+        int listY = css$idListY(screen);
+        int maxRows = 4;
+
+        for (int i = 0; i < Math.min(ids.size(), maxRows); i++) {
+            int rowY = listY + i * css$idRowHeight();
+
+            if (!css$isInside(
+                    mouseX,
+                    mouseY,
+                    listX,
+                    rowY,
+                    css$idRowWidth(),
+                    css$idRowHeight()
+            )) {
+                continue;
+            }
+
+            UUID selectedId = ids.get(i);
+
+            PacketDistributor.sendToServer(new LinkScheduleSyncIdPayload(selectedId));
+
+            callback.setReturnValue(true);
+            return;
+        }
+
     }
 
     @Unique
@@ -287,5 +339,25 @@ public abstract class ScheduleScreenMixin {
     @Unique
     private static int css$newButtonY(AbstractContainerScreen<?> screen) {
         return css$panelY(screen) + 50;
+    }
+
+    @Unique
+    private static int css$idListX(AbstractContainerScreen<?> screen) {
+        return css$panelX(screen) + 8;
+    }
+
+    @Unique
+    private static int css$idListY(AbstractContainerScreen<?> screen) {
+        return css$panelY(screen) + 88;
+    }
+
+    @Unique
+    private static int css$idRowWidth() {
+        return CSS_PANEL_WIDTH - 16;
+    }
+
+    @Unique
+    private static int css$idRowHeight() {
+        return 10;
     }
 }
