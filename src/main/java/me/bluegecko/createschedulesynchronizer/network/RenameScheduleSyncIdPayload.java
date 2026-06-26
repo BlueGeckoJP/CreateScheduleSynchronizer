@@ -34,11 +34,6 @@ public record RenameScheduleSyncIdPayload(UUID syncId, String name) implements C
                     )
             );
 
-    @Override
-    public Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
-
     public static void handle(
             RenameScheduleSyncIdPayload payload,
             IPayloadContext context
@@ -76,5 +71,10 @@ public record RenameScheduleSyncIdPayload(UUID syncId, String name) implements C
                     true
             );
         });
+    }
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 }

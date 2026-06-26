@@ -1,7 +1,6 @@
 package me.bluegecko.createschedulesynchronizer.mixin;
 
 import com.simibubi.create.Create;
-import com.simibubi.create.content.trains.entity.AddTrainPacket;
 import com.simibubi.create.content.trains.schedule.ScheduleRuntime;
 import com.tterrag.registrate.util.entry.ItemEntry;
 import me.bluegecko.createschedulesynchronizer.compat.RunningTrainScheduleSync;
@@ -77,10 +76,10 @@ public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
     }
 
     /**
-    * When removing a Schedule from a train, return it as a synchronized item
-    * if its source provider is the synchronized system.
-    * Also restore the sync_id to the returned ItemStack at this point.
-    */
+     * When removing a Schedule from a train, return it as a synchronized item
+     * if its source provider is the synchronized system.
+     * Also restore the sync_id to the returned ItemStack at this point.
+     */
     @Redirect(
             method = "returnSchedule",
             at = @At(

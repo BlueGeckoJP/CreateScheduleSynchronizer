@@ -38,11 +38,6 @@ public record ScheduleSyncCurrentIdPayload(UUID syncId) implements CustomPacketP
                     }
             );
 
-    @Override
-    public Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
-
     public static void handle(
             ScheduleSyncCurrentIdPayload payload,
             IPayloadContext context
@@ -50,5 +45,10 @@ public record ScheduleSyncCurrentIdPayload(UUID syncId) implements CustomPacketP
         context.enqueueWork(() ->
                 ScheduleSyncClientState.setCurrentId(payload.syncId())
         );
+    }
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 }

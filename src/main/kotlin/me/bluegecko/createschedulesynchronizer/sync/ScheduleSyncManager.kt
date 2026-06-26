@@ -1,16 +1,14 @@
 package me.bluegecko.createschedulesynchronizer.sync
 
 import com.simibubi.create.AllDataComponents
-import com.simibubi.create.content.redstone.displayLink.LinkWithBulbBlockEntity
 import com.simibubi.create.content.trains.schedule.Schedule
 import me.bluegecko.createschedulesynchronizer.compat.RunningTrainScheduleSync
 import me.bluegecko.createschedulesynchronizer.item.SynchronizedScheduleItem
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
-import net.minecraft.world.InteractionHand
 import net.minecraft.world.item.ItemStack
-import java.util.UUID
+import java.util.*
 
 object ScheduleSyncManager {
     /**
@@ -231,7 +229,8 @@ object ScheduleSyncManager {
         val store = ScheduleSyncSavedData.get(level)
 
         val storedSchedule = store.getScheduleTag(syncId) ?: return LinkWithTagResult(
-            LinkResult.NOT_FOUND, null)
+            LinkResult.NOT_FOUND, null
+        )
 
         val displayName = store.getDisplayName(syncId) ?: "Schedule ${syncId.toString().substring(0, 8)}"
 

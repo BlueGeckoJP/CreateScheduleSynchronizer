@@ -24,7 +24,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
-import java.util.UUID;
 
 @Mixin(value = ScheduleScreen.class, remap = false)
 public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
@@ -51,6 +50,113 @@ public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
 
     @Unique
     private EditBox css$renameEditBox;
+    @Shadow
+    private Schedule schedule;
+
+    @Unique
+    private static void css$drawOverlayButton(
+            GuiGraphics graphics,
+            Minecraft minecraft,
+            int x,
+            int y,
+            int width,
+            int height,
+            String label,
+            boolean hovered
+    ) {
+        graphics.fill(
+                x,
+                y,
+                x + width,
+                y + height,
+                hovered ? 0xFF5A6F8F : 0xFF3E4A5C
+        );
+
+        graphics.renderOutline(x, y, width, height, 0xFFFFFFFF);
+
+        graphics.drawCenteredString(
+                minecraft.font,
+                Component.literal(label),
+                x + width / 2,
+                y + 5,
+                0xFFFFFFFF
+        );
+    }
+
+    @Unique
+    private static int css$panelX(AbstractContainerScreen<?> screen) {
+        return screen.getGuiLeft() + screen.getXSize() + 8;
+    }
+
+    @Unique
+    private static int css$panelY(AbstractContainerScreen<?> screen) {
+        return screen.getGuiTop() + 12;
+    }
+
+    @Unique
+    private static int css$saveButtonX(AbstractContainerScreen<?> screen) {
+        return css$panelX(screen) + 10;
+    }
+
+    @Unique
+    private static int css$saveButtonY(AbstractContainerScreen<?> screen) {
+        return css$panelY(screen) + 38;
+    }
+
+    @Unique
+    private static boolean css$isInside(
+            double mouseX,
+            double mouseY,
+            int x,
+            int y,
+            int width,
+            int height
+    ) {
+        return mouseX >= x
+                && mouseX < x + width
+                && mouseY >= y
+                && mouseY < y + height;
+    }
+
+    @Unique
+    private static int css$newButtonX(AbstractContainerScreen<?> screen) {
+        return css$panelX(screen) + 10;
+    }
+
+    @Unique
+    private static int css$newButtonY(AbstractContainerScreen<?> screen) {
+        return css$panelY(screen) + 62;
+    }
+
+    @Unique
+    private static int css$idListX(AbstractContainerScreen<?> screen) {
+        return css$panelX(screen) + 8;
+    }
+
+    @Unique
+    private static int css$idListY(AbstractContainerScreen<?> screen) {
+        return css$panelY(screen) + 124;
+    }
+
+    @Unique
+    private static int css$idRowWidth() {
+        return CSS_PANEL_WIDTH - 16;
+    }
+
+    @Unique
+    private static int css$idRowHeight() {
+        return 10;
+    }
+
+    @Unique
+    private static int css$unlinkButtonX(AbstractContainerScreen<?> screen) {
+        return css$panelX(screen) + 10;
+    }
+
+    @Unique
+    private static int css$unlinkButtonY(AbstractContainerScreen<?> screen) {
+        return css$panelY(screen) + 86;
+    }
 
     @Unique
     private void css$openRenameOverlay(ScheduleSyncEntry target) {
@@ -173,39 +279,6 @@ public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
 
         graphics.pose().popPose();
     }
-
-    @Unique
-    private static void css$drawOverlayButton(
-            GuiGraphics graphics,
-            Minecraft minecraft,
-            int x,
-            int y,
-            int width,
-            int height,
-            String label,
-            boolean hovered
-    ) {
-        graphics.fill(
-                x,
-                y,
-                x + width,
-                y + height,
-                hovered ? 0xFF5A6F8F : 0xFF3E4A5C
-        );
-
-        graphics.renderOutline(x, y, width, height, 0xFFFFFFFF);
-
-        graphics.drawCenteredString(
-                minecraft.font,
-                Component.literal(label),
-                x + width / 2,
-                y + 5,
-                0xFFFFFFFF
-        );
-    }
-
-    @Shadow
-    private Schedule schedule;
 
     @Shadow
     protected abstract void init();
@@ -676,81 +749,6 @@ public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
         }
 
         callback.setReturnValue(true);
-    }
-
-    @Unique
-    private static int css$panelX(AbstractContainerScreen<?> screen) {
-        return screen.getGuiLeft() + screen.getXSize() + 8;
-    }
-
-    @Unique
-    private static int css$panelY(AbstractContainerScreen<?> screen) {
-        return screen.getGuiTop() + 12;
-    }
-
-    @Unique
-    private static int css$saveButtonX(AbstractContainerScreen<?> screen) {
-        return css$panelX(screen) + 10;
-    }
-
-    @Unique
-    private static int css$saveButtonY(AbstractContainerScreen<?> screen) {
-        return css$panelY(screen) + 38;
-    }
-
-    @Unique
-    private static boolean css$isInside(
-            double mouseX,
-            double mouseY,
-            int x,
-            int y,
-            int width,
-            int height
-    ) {
-        return mouseX >= x
-                && mouseX < x + width
-                && mouseY >= y
-                && mouseY < y + height;
-    }
-
-    @Unique
-    private static int css$newButtonX(AbstractContainerScreen<?> screen) {
-        return css$panelX(screen) + 10;
-    }
-
-    @Unique
-    private static int css$newButtonY(AbstractContainerScreen<?> screen) {
-        return css$panelY(screen) + 62;
-    }
-
-    @Unique
-    private static int css$idListX(AbstractContainerScreen<?> screen) {
-        return css$panelX(screen) + 8;
-    }
-
-    @Unique
-    private static int css$idListY(AbstractContainerScreen<?> screen) {
-        return css$panelY(screen) + 124;
-    }
-
-    @Unique
-    private static int css$idRowWidth() {
-        return CSS_PANEL_WIDTH - 16;
-    }
-
-    @Unique
-    private static int css$idRowHeight() {
-        return 10;
-    }
-
-    @Unique
-    private static int css$unlinkButtonX(AbstractContainerScreen<?> screen) {
-        return css$panelX(screen) + 10;
-    }
-
-    @Unique
-    private static int css$unlinkButtonY(AbstractContainerScreen<?> screen) {
-        return css$panelY(screen) + 86;
     }
 
     @Override

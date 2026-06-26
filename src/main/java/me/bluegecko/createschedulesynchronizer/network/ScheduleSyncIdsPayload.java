@@ -59,15 +59,15 @@ public record ScheduleSyncIdsPayload(List<ScheduleSyncEntry> entries) implements
                     }
             );
 
-    @Override
-    public Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
-
     public static void handle(
             ScheduleSyncIdsPayload payload,
             IPayloadContext context
     ) {
         context.enqueueWork(() -> ScheduleSyncClientState.setEntries(payload.entries()));
+    }
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 }

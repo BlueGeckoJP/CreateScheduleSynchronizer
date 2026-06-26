@@ -31,11 +31,6 @@ public record LinkScheduleSyncIdPayload(UUID syncId) implements CustomPacketPayl
                     )
             );
 
-    @Override
-    public Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
-
     public static void handle(
             LinkScheduleSyncIdPayload payload,
             IPayloadContext context
@@ -77,5 +72,10 @@ public record LinkScheduleSyncIdPayload(UUID syncId) implements CustomPacketPayl
                 );
             }
         });
+    }
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 }

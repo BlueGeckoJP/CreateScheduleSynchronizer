@@ -22,11 +22,6 @@ public record ApplyScheduleSyncPayload(CompoundTag scheduleTag) implements Custo
                     buffer -> new ApplyScheduleSyncPayload(buffer.readNbt())
             );
 
-    @Override
-    public Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
-
     public static void handle(
             ApplyScheduleSyncPayload payload,
             IPayloadContext context
@@ -34,5 +29,10 @@ public record ApplyScheduleSyncPayload(CompoundTag scheduleTag) implements Custo
         context.enqueueWork(() ->
                 ScheduleSyncClientState.setPendingScheduleTag(payload.scheduleTag())
         );
+    }
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 }

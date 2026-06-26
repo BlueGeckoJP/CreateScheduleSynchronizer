@@ -22,11 +22,6 @@ public record UnlinkScheduleSyncIdPayload() implements CustomPacketPayload {
     public static final StreamCodec<RegistryFriendlyByteBuf, UnlinkScheduleSyncIdPayload> STREAM_CODEC =
             StreamCodec.unit(new UnlinkScheduleSyncIdPayload());
 
-    @Override
-    public Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
-
     public static void handle(
             UnlinkScheduleSyncIdPayload payload,
             IPayloadContext context
@@ -62,5 +57,10 @@ public record UnlinkScheduleSyncIdPayload() implements CustomPacketPayload {
                 );
             }
         });
+    }
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 }

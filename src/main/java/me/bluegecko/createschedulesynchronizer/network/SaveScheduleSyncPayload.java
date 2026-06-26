@@ -23,11 +23,6 @@ public record SaveScheduleSyncPayload(CompoundTag scheduleTag) implements Custom
             buffer -> new SaveScheduleSyncPayload(buffer.readNbt())
     );
 
-    @Override
-    public Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
-
     public static void handle(
             SaveScheduleSyncPayload payload,
             IPayloadContext context
@@ -59,5 +54,10 @@ public record SaveScheduleSyncPayload(CompoundTag scheduleTag) implements Custom
                 );
             }
         });
+    }
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 }

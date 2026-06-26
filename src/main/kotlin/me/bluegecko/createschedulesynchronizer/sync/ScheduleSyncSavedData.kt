@@ -10,7 +10,6 @@ import net.minecraft.nbt.Tag
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.saveddata.SavedData
-import org.checkerframework.checker.units.qual.s
 import java.util.*
 
 class ScheduleSyncSavedData : SavedData() {

@@ -14,21 +14,21 @@ public final class ScheduleSyncClientState {
     private ScheduleSyncClientState() {
     }
 
+    public static List<ScheduleSyncEntry> getEntries() {
+        return List.copyOf(ENTRIES);
+    }
+
     public static void setEntries(List<ScheduleSyncEntry> entries) {
         ENTRIES.clear();
         ENTRIES.addAll(entries);
     }
 
-    public static List<ScheduleSyncEntry> getEntries() {
-        return List.copyOf(ENTRIES);
+    public static UUID getCurrentId() {
+        return currentId;
     }
 
     public static void setCurrentId(UUID id) {
         currentId = id;
-    }
-
-    public static UUID getCurrentId() {
-        return currentId;
     }
 
     public static ScheduleSyncEntry getCurrentEntry() {
