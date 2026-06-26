@@ -3,6 +3,7 @@ package me.bluegecko.createschedulesynchronizer.sync
 import com.simibubi.create.AllDataComponents
 import com.simibubi.create.content.trains.schedule.Schedule
 import me.bluegecko.createschedulesynchronizer.item.SynchronizedScheduleItem
+import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionHand
@@ -51,19 +52,30 @@ object ScheduleSyncManager {
     }
 
     @JvmStatic
-    fun saveMainHandScheduleToStore(player: ServerPlayer): SaveResult {
-        return saveHeldScheduleToStore(player, InteractionHand.MAIN_HAND)
+    fun saveMainHandScheduleToStore(player: ServerPlayer, scheduleTag: CompoundTag): SaveResult {
+        return saveItemScheduleTagToStore(
+            stack = player.mainHandItem,
+            level = player.serverLevel(),
+            scheduleTag = scheduleTag
+        )
     }
 
     @JvmStatic
-    fun saveHeldScheduleToStore(
-        player: ServerPlayer,
-        hand: InteractionHand
+    fun saveItemScheduleTagToStore(
+        stack: ItemStack,
+        level: ServerLevel,
+        scheduleTag: CompoundTag
     ): SaveResult {
-        return saveItemToStore(
-            stack = player.getItemInHand(hand),
-            level = player.serverLevel()
-        )
+        if (stack.item !is SynchronizedScheduleItem) {
+            return SaveResult.NOT_SYNCHRONIZED_SCHEDULE
+        }
+
+        val syncId = SynchronizedScheduleItem.getSyncId(stack) ?: return SaveResult.NOT_LINKED
+
+        stack.set(AllDataComponents.TRAIN_SCHEDULE, scheduleTag.copy())
+        ScheduleSyncSavedData.get(level).putScheduleTag(syncId, scheduleTag.copy())
+
+        return SaveResult.SAVED
     }
 
     @JvmStatic

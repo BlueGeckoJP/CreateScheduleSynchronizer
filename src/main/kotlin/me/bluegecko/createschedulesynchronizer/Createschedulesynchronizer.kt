@@ -2,12 +2,14 @@ package me.bluegecko.createschedulesynchronizer
 
 import me.bluegecko.createschedulesynchronizer.data.ModDataComponents
 import me.bluegecko.createschedulesynchronizer.item.ModItems
+import me.bluegecko.createschedulesynchronizer.network.ModNetworking
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.fml.common.Mod
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent
 import net.neoforged.fml.event.lifecycle.FMLDedicatedServerSetupEvent
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
@@ -50,5 +52,10 @@ object Createschedulesynchronizer {
     @SubscribeEvent
     fun onCommonSetup(event: FMLCommonSetupEvent) {
         LOGGER.log(Level.INFO, "Hello! This is working!")
+    }
+
+    @SubscribeEvent
+    fun onRegisterPayloadHandlers(event: RegisterPayloadHandlersEvent) {
+        ModNetworking.register(event)
     }
 }
