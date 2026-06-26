@@ -47,6 +47,19 @@ public abstract class ScheduleScreenMixin {
         PacketDistributor.sendToServer(new RequestScheduleSyncIdsPayload());
     }
 
+    @Inject(method = "containerTick", at = @At("TAIL"))
+    private void css$applyPendingScheduleTag(CallbackInfo callback) {
+        CompoundTag pending = ScheduleSyncClientState.consumePendingScheduleTag();
+        if (pending == null) {
+            return;
+        }
+
+        schedule = Schedule.fromTag(
+                Minecraft.getInstance().player.registryAccess(),
+                pending
+        );
+    }
+
     @Inject(method = "render", at = @At("TAIL"))
     private void css$renderSyncPanel(
             GuiGraphics graphics,

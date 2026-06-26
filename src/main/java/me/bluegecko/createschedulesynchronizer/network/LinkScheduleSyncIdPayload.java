@@ -8,6 +8,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.UUID;
@@ -44,13 +45,22 @@ public record LinkScheduleSyncIdPayload(UUID syncId) implements CustomPacketPayl
         }
 
         context.enqueueWork(() -> {
-            ScheduleSyncManager.LinkResult result = ScheduleSyncManager.linkMainHandToScheduleId(player, payload.syncId());
+            ScheduleSyncManager.LinkWithTagResult result = ScheduleSyncManager.linkMainHandToScheduleIdAndGetTag(player, payload.syncId());
 
-            switch (result) {
-                case LINKED -> player.displayClientMessage(
-                        Component.literal("Linked synchronized schedule."),
-                        true
-                );
+            switch (result.getResult()) {
+                case LINKED -> {
+                    player.displayClientMessage(
+                            Component.literal("Linked synchronized schedule."),
+                            true
+                    );
+
+                    if (result.getScheduleTag() != null) {
+                        PacketDistributor.sendToPlayer(
+                                player,
+                                new ApplyScheduleSyncPayload(result.getScheduleTag())
+                        );
+                    }
+                }
 
                 case NOT_FOUND -> player.displayClientMessage(
                         Component.literal("Selected sync ID was not found."),

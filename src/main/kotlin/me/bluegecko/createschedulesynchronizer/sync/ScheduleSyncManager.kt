@@ -1,6 +1,7 @@
 package me.bluegecko.createschedulesynchronizer.sync
 
 import com.simibubi.create.AllDataComponents
+import com.simibubi.create.content.redstone.displayLink.LinkWithBulbBlockEntity
 import com.simibubi.create.content.trains.schedule.Schedule
 import me.bluegecko.createschedulesynchronizer.item.SynchronizedScheduleItem
 import net.minecraft.nbt.CompoundTag
@@ -180,4 +181,40 @@ object ScheduleSyncManager {
         NOT_FOUND,
         NOT_SYNCHRONIZED_SCHEDULE,
     }
+
+    @JvmStatic
+    fun linkMainHandToScheduleIdAndGetTag(
+        player: ServerPlayer,
+        syncId: UUID,
+    ): LinkWithTagResult {
+        return linkItemToScheduleIdAndGetTag(
+            stack = player.mainHandItem,
+            level = player.serverLevel(),
+            syncId = syncId,
+        )
+    }
+
+    @JvmStatic
+    fun linkItemToScheduleIdAndGetTag(
+        stack: ItemStack,
+        level: ServerLevel,
+        syncId: UUID,
+    ): LinkWithTagResult {
+        if (stack.item !is SynchronizedScheduleItem) {
+            return LinkWithTagResult(LinkResult.NOT_SYNCHRONIZED_SCHEDULE, null)
+        }
+
+        val storedSchedule = ScheduleSyncSavedData.get(level).getScheduleTag(syncId) ?: return LinkWithTagResult(
+            LinkResult.NOT_FOUND, null)
+
+        SynchronizedScheduleItem.setSyncId(stack, syncId)
+        stack.set(AllDataComponents.TRAIN_SCHEDULE, storedSchedule.copy())
+
+        return LinkWithTagResult(LinkResult.LINKED, storedSchedule.copy())
+    }
+
+    data class LinkWithTagResult(
+        val result: LinkResult,
+        val scheduleTag: CompoundTag?
+    )
 }
