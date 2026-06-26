@@ -22,5 +22,17 @@ public final class ModNetworking {
                 NewScheduleSyncIdPayload.STREAM_CODEC,
                 NewScheduleSyncIdPayload::handle
         );
+
+        registrar.playToServer(
+                RequestScheduleSyncIdsPayload.TYPE,
+                RequestScheduleSyncIdsPayload.STREAM_CODEC,
+                RequestScheduleSyncIdsPayload::handle
+        );
+
+        registrar.playToClient(
+                ScheduleSyncIdsPayload.TYPE,
+                ScheduleSyncIdsPayload.STREAM_CODEC,
+                ScheduleSyncIdsPayload::handle
+        );
     }
 }

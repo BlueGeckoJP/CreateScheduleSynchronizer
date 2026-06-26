@@ -67,6 +67,7 @@ class ScheduleSyncSavedData : SavedData() {
     companion object {
         private const val DATA_NAME = Createschedulesynchronizer.ID + "_schedule_sync"
 
+        @JvmStatic
         fun get(level: ServerLevel): ScheduleSyncSavedData {
             val overworld = level.server.getLevel(Level.OVERWORLD) ?: level
 

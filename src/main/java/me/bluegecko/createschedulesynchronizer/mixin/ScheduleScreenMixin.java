@@ -2,7 +2,9 @@ package me.bluegecko.createschedulesynchronizer.mixin;
 
 import com.simibubi.create.content.trains.schedule.Schedule;
 import com.simibubi.create.content.trains.schedule.ScheduleScreen;
+import me.bluegecko.createschedulesynchronizer.client.ScheduleSyncClientState;
 import me.bluegecko.createschedulesynchronizer.network.NewScheduleSyncIdPayload;
+import me.bluegecko.createschedulesynchronizer.network.RequestScheduleSyncIdsPayload;
 import me.bluegecko.createschedulesynchronizer.network.SaveScheduleSyncPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -18,13 +20,16 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.List;
+import java.util.UUID;
+
 @Mixin(value = ScheduleScreen.class, remap = false)
 public abstract class ScheduleScreenMixin {
     @Unique
     private static final int CSS_PANEL_WIDTH = 92;
 
     @Unique
-    private static final int CSS_PANEL_HEIGHT = 78;
+    private static final int CSS_PANEL_HEIGHT = 136;
 
     @Unique
     private static final int CSS_BUTTON_WIDTH = 72;
@@ -34,6 +39,12 @@ public abstract class ScheduleScreenMixin {
 
     @Shadow
     private Schedule schedule;
+
+    @Inject(method = "init", at = @At("TAIL"))
+    private void css$requestSyncIds(CallbackInfo callback) {
+        ScheduleSyncClientState.clear();
+        PacketDistributor.sendToServer(new RequestScheduleSyncIdsPayload());
+    }
 
     @Inject(method = "render", at = @At("TAIL"))
     private void css$renderSyncPanel(
@@ -143,6 +154,45 @@ public abstract class ScheduleScreenMixin {
                 newButtonY + 5,
                 0xFFFFFFFF
         );
+
+        List<UUID> ids = ScheduleSyncClientState.getIds();
+
+        graphics.drawString(
+                minecraft.font,
+                Component.literal("IDs"),
+                panelX + 6,
+                panelY + 76,
+                0xFFE0E0E0,
+                false
+        );
+
+        int listY = panelY + 88;
+        int maxRows = 4;
+
+        for (int i = 0; i < Math.min(ids.size(), maxRows); i++) {
+            UUID id = ids.get(i);
+            String text = id.toString().substring(0, 8);
+
+            graphics.drawString(
+                    minecraft.font,
+                    Component.literal(text),
+                    panelX + 8,
+                    listY + i * 10,
+                    0xFFB0B0B0,
+                    false
+            );
+        }
+
+        if (ids.size() > maxRows) {
+            graphics.drawString(
+                    minecraft.font,
+                    Component.literal("+" + (ids.size() - maxRows) + " more"),
+                    panelX + 8,
+                    listY + maxRows * 10,
+                    0xFF808080,
+                    false
+            );
+        }
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
