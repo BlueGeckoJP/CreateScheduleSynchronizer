@@ -46,7 +46,7 @@ public class TrainScheduleToSynchronizedScheduleRecipe extends ScheduleConversio
     private static ItemStack findSource(CraftingInput input) {
         return findSingleSource(
                 input,
-                stack -> stack.is(AllItems.SCHEDULE.get()) && hasScheduleData(stack),
+                stack -> stack.is(AllItems.SCHEDULE.get()),
                 stack -> stack.is(Items.ENDER_PEARL)
         );
     }
