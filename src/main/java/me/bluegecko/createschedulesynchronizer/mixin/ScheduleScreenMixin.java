@@ -2,6 +2,7 @@ package me.bluegecko.createschedulesynchronizer.mixin;
 
 import com.simibubi.create.content.trains.schedule.Schedule;
 import com.simibubi.create.content.trains.schedule.ScheduleScreen;
+import me.bluegecko.createschedulesynchronizer.network.NewScheduleSyncIdPayload;
 import me.bluegecko.createschedulesynchronizer.network.SaveScheduleSyncPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -21,6 +22,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class ScheduleScreenMixin {
     @Unique
     private static final int CSS_PANEL_WIDTH = 92;
+
+    @Unique
+    private static final int CSS_PANEL_HEIGHT = 78;
 
     @Unique
     private static final int CSS_BUTTON_WIDTH = 72;
@@ -49,7 +53,7 @@ public abstract class ScheduleScreenMixin {
                 panelX,
                 panelY,
                 panelX + CSS_PANEL_WIDTH,
-                panelY + 52,
+                panelY + CSS_PANEL_HEIGHT,
                 0xAA101010
         );
 
@@ -57,7 +61,7 @@ public abstract class ScheduleScreenMixin {
                 panelX,
                 panelY,
                 CSS_PANEL_WIDTH,
-                52,
+                CSS_PANEL_HEIGHT,
                 0xFF606060
         );
 
@@ -104,6 +108,41 @@ public abstract class ScheduleScreenMixin {
                 buttonY + 5,
                 0xFFFFFFFF
         );
+
+        int newButtonX = css$newButtonX(screen);
+        int newButtonY = css$newButtonY(screen);
+        boolean newHovered = css$isInside(
+                mouseX,
+                mouseY,
+                newButtonX,
+                newButtonY,
+                CSS_BUTTON_WIDTH,
+                CSS_BUTTON_HEIGHT
+        );
+
+        graphics.fill(
+                newButtonX,
+                newButtonY,
+                newButtonX + CSS_BUTTON_WIDTH,
+                newButtonY + CSS_BUTTON_HEIGHT,
+                newHovered ? 0xFF6F8F5A : 0xFF4A5C3E
+        );
+
+        graphics.renderOutline(
+                newButtonX,
+                newButtonY,
+                CSS_BUTTON_WIDTH,
+                CSS_BUTTON_HEIGHT,
+                0xFFFFFFFF
+        );
+
+        graphics.drawCenteredString(
+                minecraft.font,
+                Component.literal("New ID"),
+                newButtonX + CSS_BUTTON_WIDTH / 2,
+                newButtonY + 5,
+                0xFFFFFFFF
+        );
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
@@ -119,26 +158,40 @@ public abstract class ScheduleScreenMixin {
 
         AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
 
-        int buttonX = css$saveButtonX(screen);
-        int buttonY = css$saveButtonY(screen);
-
-        if (!css$isInside(
-                mouseX,
-                mouseY,
-                buttonX,
-                buttonY,
-                CSS_BUTTON_WIDTH,
-                CSS_BUTTON_HEIGHT
-        )) {
-            return;
-        }
-
         CompoundTag scheduleTag = schedule.write(
                 Minecraft.getInstance().player.registryAccess()
         );
 
-        PacketDistributor.sendToServer(new SaveScheduleSyncPayload(scheduleTag));
-        callback.setReturnValue(true);
+        int saveButtonX = css$saveButtonX(screen);
+        int saveButtonY = css$saveButtonY(screen);
+
+        if (css$isInside(
+                mouseX,
+                mouseY,
+                saveButtonX,
+                saveButtonY,
+                CSS_BUTTON_WIDTH,
+                CSS_BUTTON_HEIGHT
+        )) {
+            PacketDistributor.sendToServer(new SaveScheduleSyncPayload(scheduleTag));
+            callback.setReturnValue(true);
+            return;
+        }
+
+        int newButtonX = css$newButtonX(screen);
+        int newButtonY = css$newButtonY(screen);
+
+        if (css$isInside(
+                mouseX,
+                mouseY,
+                newButtonX,
+                newButtonY,
+                CSS_BUTTON_WIDTH,
+                CSS_BUTTON_HEIGHT
+        )) {
+            PacketDistributor.sendToServer(new NewScheduleSyncIdPayload(scheduleTag));
+            callback.setReturnValue(true);
+        }
     }
 
     @Unique
@@ -174,5 +227,15 @@ public abstract class ScheduleScreenMixin {
                 && mouseX < x + width
                 && mouseY >= y
                 && mouseY < y + height;
+    }
+
+    @Unique
+    private static int css$newButtonX(AbstractContainerScreen<?> screen) {
+        return css$panelX(screen) + 10;
+    }
+
+    @Unique
+    private static int css$newButtonY(AbstractContainerScreen<?> screen) {
+        return css$panelY(screen) + 50;
     }
 }

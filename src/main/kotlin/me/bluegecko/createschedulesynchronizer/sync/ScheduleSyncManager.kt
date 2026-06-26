@@ -8,6 +8,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.item.ItemStack
+import java.util.UUID
 
 object ScheduleSyncManager {
     /**
@@ -100,5 +101,47 @@ object ScheduleSyncManager {
         NOT_SYNCHRONIZED_SCHEDULE,
         NOT_LINKED,
         SAVED
+    }
+
+
+    @JvmStatic
+    fun createNewSyncIdForMainHand(
+        player: ServerPlayer,
+        scheduleTag: CompoundTag,
+    ): NewIdResult {
+        return createNewSyncIdForItem(
+            stack = player.mainHandItem,
+            level = player.serverLevel(),
+            scheduleTag = scheduleTag
+        )
+    }
+
+    @JvmStatic
+    fun createNewSyncIdForItem(
+        stack: ItemStack,
+        level: ServerLevel,
+        scheduleTag: CompoundTag
+    ): NewIdResult {
+        if (stack.item !is SynchronizedScheduleItem) {
+            return NewIdResult(null, NewIdStatus.NOT_SYNCHRONIZED_SCHEDULE)
+        }
+
+        val syncId = UUID.randomUUID()
+
+        SynchronizedScheduleItem.setSyncId(stack, syncId)
+        stack.set(AllDataComponents.TRAIN_SCHEDULE, scheduleTag.copy())
+        ScheduleSyncSavedData.get(level).putScheduleTag(syncId, scheduleTag.copy())
+
+        return NewIdResult(syncId, NewIdStatus.CREATED)
+    }
+
+    data class NewIdResult(
+        val syncId: UUID?,
+        val status: NewIdStatus
+    )
+
+    enum class NewIdStatus {
+        CREATED,
+        NOT_SYNCHRONIZED_SCHEDULE,
     }
 }
