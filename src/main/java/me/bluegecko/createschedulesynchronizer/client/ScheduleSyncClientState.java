@@ -8,6 +8,7 @@ import java.util.UUID;
 
 public final class ScheduleSyncClientState {
     private static final List<UUID> IDS = new ArrayList<>();
+    private static UUID currentId;
     private static CompoundTag pendingScheduleTag;
 
     private ScheduleSyncClientState() {
@@ -22,6 +23,14 @@ public final class ScheduleSyncClientState {
         return List.copyOf(IDS);
     }
 
+    public static void setCurrentId(UUID id) {
+        currentId = id;
+    }
+
+    public static UUID getCurrentId() {
+        return currentId;
+    }
+
     public static void setPendingScheduleTag(CompoundTag tag) {
         pendingScheduleTag = tag.copy();
     }
@@ -34,6 +43,7 @@ public final class ScheduleSyncClientState {
 
     public static void clear() {
         IDS.clear();
+        currentId = null;
         pendingScheduleTag = null;
     }
 }

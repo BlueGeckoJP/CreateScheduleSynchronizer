@@ -49,17 +49,21 @@ public record LinkScheduleSyncIdPayload(UUID syncId) implements CustomPacketPayl
 
             switch (result.getResult()) {
                 case LINKED -> {
-                    player.displayClientMessage(
-                            Component.literal("Linked synchronized schedule."),
-                            true
-                    );
-
                     if (result.getScheduleTag() != null) {
                         PacketDistributor.sendToPlayer(
                                 player,
                                 new ApplyScheduleSyncPayload(result.getScheduleTag())
                         );
                     }
+
+                    ScheduleSyncNetworkHelper.sendSyncPanelState(player);
+
+                    player.displayClientMessage(
+                            Component.literal("Linked synchronized schedule."),
+                            true
+                    );
+
+
                 }
 
                 case NOT_FOUND -> player.displayClientMessage(

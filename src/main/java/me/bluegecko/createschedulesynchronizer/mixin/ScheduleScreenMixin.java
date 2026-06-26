@@ -27,7 +27,7 @@ public abstract class ScheduleScreenMixin {
     private static final int CSS_PANEL_WIDTH = 92;
 
     @Unique
-    private static final int CSS_PANEL_HEIGHT = 160;
+    private static final int CSS_PANEL_HEIGHT = 172;
 
     @Unique
     private static final int CSS_BUTTON_WIDTH = 72;
@@ -98,6 +98,21 @@ public abstract class ScheduleScreenMixin {
                 panelX + 6,
                 panelY + 6,
                 0xFFE0E0E0,
+                false
+        );
+
+        UUID currentId = ScheduleSyncClientState.getCurrentId();
+
+        String currentText = currentId == null
+                ? "Current: none"
+                : "Current: " + currentId.toString().substring(0, 8);
+
+        graphics.drawString(
+                minecraft.font,
+                Component.literal(currentText),
+                panelX + 6,
+                panelY + 18,
+                currentId == null ? 0xFF808080 : 0xFF90D090,
                 false
         );
 
@@ -212,7 +227,7 @@ public abstract class ScheduleScreenMixin {
                 minecraft.font,
                 Component.literal("IDs"),
                 panelX + 6,
-                panelY + 100,
+                panelY + 112,
                 0xFFE0E0E0,
                 false
         );
@@ -225,6 +240,7 @@ public abstract class ScheduleScreenMixin {
             UUID id = ids.get(i);
             int rowY = listY + i * css$idRowHeight();
 
+            boolean selected = id.equals(currentId);
             boolean idHovered = css$isInside(
                     mouseX,
                     mouseY,
@@ -234,13 +250,13 @@ public abstract class ScheduleScreenMixin {
                     css$idRowHeight()
             );
 
-            if (idHovered) {
+            if (idHovered || selected) {
                 graphics.fill(
                         listX - 2,
                         rowY - 1,
                         listX + css$idRowWidth(),
                         rowY + css$idRowHeight(),
-                        0x553E6A9E
+                        selected ? 0x664A8F4A : 0x553E6A9E
                 );
             }
 
@@ -251,7 +267,7 @@ public abstract class ScheduleScreenMixin {
                     Component.literal(text),
                     listX,
                     rowY,
-                    idHovered ? 0xFFFFFFFF : 0xFFB0B0B0,
+                    selected ? 0xFF90FF90 : idHovered ? 0xFFFFFFFF : 0xFFB0B0B0,
                     false
             );
         }
@@ -379,7 +395,7 @@ public abstract class ScheduleScreenMixin {
 
     @Unique
     private static int css$saveButtonY(AbstractContainerScreen<?> screen) {
-        return css$panelY(screen) + 26;
+        return css$panelY(screen) + 38;
     }
 
     @Unique
@@ -404,7 +420,7 @@ public abstract class ScheduleScreenMixin {
 
     @Unique
     private static int css$newButtonY(AbstractContainerScreen<?> screen) {
-        return css$panelY(screen) + 50;
+        return css$panelY(screen) + 62;
     }
 
     @Unique
@@ -414,7 +430,7 @@ public abstract class ScheduleScreenMixin {
 
     @Unique
     private static int css$idListY(AbstractContainerScreen<?> screen) {
-        return css$panelY(screen) + 112;
+        return css$panelY(screen) + 124;
     }
 
     @Unique
@@ -434,6 +450,6 @@ public abstract class ScheduleScreenMixin {
 
     @Unique
     private static int css$unlinkButtonY(AbstractContainerScreen<?> screen) {
-        return css$panelY(screen) + 74;
+        return css$panelY(screen) + 86;
     }
 }

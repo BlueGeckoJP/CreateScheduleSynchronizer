@@ -52,5 +52,11 @@ public final class ModNetworking {
                 UnlinkScheduleSyncIdPayload.STREAM_CODEC,
                 UnlinkScheduleSyncIdPayload::handle
         );
+
+        registrar.playToClient(
+                ScheduleSyncCurrentIdPayload.TYPE,
+                ScheduleSyncCurrentIdPayload.STREAM_CODEC,
+                ScheduleSyncCurrentIdPayload::handle
+        );
     }
 }

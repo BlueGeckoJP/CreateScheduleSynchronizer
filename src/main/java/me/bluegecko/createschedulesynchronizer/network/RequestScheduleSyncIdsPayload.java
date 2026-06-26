@@ -34,11 +34,7 @@ public record RequestScheduleSyncIdsPayload() implements CustomPacketPayload {
         }
 
         context.enqueueWork(() -> {
-            var ids = ScheduleSyncSavedData.get(player.serverLevel()).ids();
-            PacketDistributor.sendToPlayer(
-                    player,
-                    new ScheduleSyncIdsPayload(ids)
-            );
+            ScheduleSyncNetworkHelper.sendSyncPanelState(player);
         });
     }
 }

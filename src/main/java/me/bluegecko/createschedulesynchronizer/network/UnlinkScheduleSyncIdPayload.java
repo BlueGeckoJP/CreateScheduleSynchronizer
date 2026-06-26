@@ -41,16 +41,18 @@ public record UnlinkScheduleSyncIdPayload() implements CustomPacketPayload {
 
             switch (result) {
                 case UNLINKED -> {
-                    player.displayClientMessage(
-                            Component.literal("Synchronized schedule unlinked."),
-                            true
-                    );
-
                     PacketDistributor.sendToPlayer(
                             player,
                             new ApplyScheduleSyncPayload(
                                     new Schedule().write(player.registryAccess())
                             )
+                    );
+
+                    ScheduleSyncNetworkHelper.sendSyncPanelState(player);
+
+                    player.displayClientMessage(
+                            Component.literal("Synchronized schedule unlinked."),
+                            true
                     );
                 }
 

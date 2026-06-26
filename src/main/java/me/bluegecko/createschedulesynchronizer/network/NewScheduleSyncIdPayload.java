@@ -48,16 +48,10 @@ public record NewScheduleSyncIdPayload(CompoundTag scheduleTag) implements Custo
 
             switch (result.getStatus()) {
                 case CREATED -> {
+                    ScheduleSyncNetworkHelper.sendSyncPanelState(player);
                     player.displayClientMessage(
                             Component.literal("New sync ID created: " + result.getSyncId()),
                             true
-                    );
-
-                    PacketDistributor.sendToPlayer(
-                            player,
-                            new ScheduleSyncIdsPayload(
-                                    ScheduleSyncSavedData.get(player.serverLevel()).ids()
-                            )
                     );
                 }
 
