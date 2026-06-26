@@ -15,6 +15,14 @@ public class TrainScheduleToSynchronizedScheduleRecipe extends ScheduleConversio
         super(category);
     }
 
+    private static ItemStack findSource(CraftingInput input) {
+        return findSingleSource(
+                input,
+                stack -> stack.is(AllItems.SCHEDULE.get()),
+                stack -> stack.is(Items.ENDER_PEARL)
+        );
+    }
+
     @Override
     public boolean matches(CraftingInput input, Level level) {
         return !findSource(input).isEmpty();
@@ -41,13 +49,5 @@ public class TrainScheduleToSynchronizedScheduleRecipe extends ScheduleConversio
     @Override
     public RecipeSerializer<?> getSerializer() {
         return ModRecipeSerializers.TRAIN_TO_SYNC.get();
-    }
-
-    private static ItemStack findSource(CraftingInput input) {
-        return findSingleSource(
-                input,
-                stack -> stack.is(AllItems.SCHEDULE.get()),
-                stack -> stack.is(Items.ENDER_PEARL)
-        );
     }
 }
