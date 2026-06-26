@@ -2,10 +2,12 @@ package me.bluegecko.createschedulesynchronizer.mixin;
 
 import com.simibubi.create.content.trains.schedule.Schedule;
 import com.simibubi.create.content.trains.schedule.ScheduleEntry;
+import com.simibubi.create.content.trains.schedule.ScheduleMenu;
 import com.simibubi.create.content.trains.schedule.ScheduleScreen;
 import me.bluegecko.createschedulesynchronizer.client.ScheduleSyncClientState;
 import me.bluegecko.createschedulesynchronizer.client.ScheduleSyncEntry;
 import me.bluegecko.createschedulesynchronizer.compat.RenameOverlayHandler;
+import me.bluegecko.createschedulesynchronizer.item.SynchronizedScheduleItem;
 import me.bluegecko.createschedulesynchronizer.network.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -14,6 +16,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -280,6 +283,18 @@ public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
         graphics.pose().popPose();
     }
 
+    @Unique
+    private boolean css$isSyncScheduleScreen() {
+        Object menu = ((AbstractContainerScreen<?>) (Object) this).getMenu();
+
+        if (!(menu instanceof ScheduleMenu scheduleMenu)) {
+            return false;
+        }
+
+        ItemStack stack = scheduleMenu.contentHolder;
+        return !stack.isEmpty() && stack.getItem() instanceof SynchronizedScheduleItem;
+    }
+
     @Shadow
     protected abstract void init();
 
@@ -290,11 +305,20 @@ public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
     private void css$requestSyncIds(CallbackInfo callback) {
         ScheduleSyncClientState.clear();
         css$idScrollOffset = 0;
+
+        if (!css$isSyncScheduleScreen()) {
+            return;
+        }
+
         PacketDistributor.sendToServer(new RequestScheduleSyncIdsPayload());
     }
 
     @Inject(method = "containerTick", at = @At("TAIL"))
     private void css$applyPendingScheduleTag(CallbackInfo callback) {
+        if (!css$isSyncScheduleScreen()) {
+            return;
+        }
+
         CompoundTag pending = ScheduleSyncClientState.consumePendingScheduleTag();
         if (pending == null) {
             return;
@@ -316,6 +340,10 @@ public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
             double scrollY,
             CallbackInfoReturnable<Boolean> callback
     ) {
+        if (!css$isSyncScheduleScreen()) {
+            return;
+        }
+
         AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
 
         int listX = css$idListX(screen);
@@ -360,6 +388,10 @@ public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
             float partialTick,
             CallbackInfo callback
     ) {
+        if (!css$isSyncScheduleScreen()) {
+            return;
+        }
+
         AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
         Minecraft minecraft = Minecraft.getInstance();
 
@@ -590,6 +622,10 @@ public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
             int button,
             CallbackInfoReturnable<Boolean> callback
     ) {
+        if (!css$isSyncScheduleScreen()) {
+            return;
+        }
+
         if (css$renameOverlayOpen) {
             Screen screen = (Screen) (Object) this;
 
@@ -727,6 +763,10 @@ public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
             int modifiers,
             CallbackInfoReturnable<Boolean> callback
     ) {
+        if (!css$isSyncScheduleScreen()) {
+            return;
+        }
+
         if (!css$renameOverlayOpen) {
             return;
         }
@@ -753,6 +793,10 @@ public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
 
     @Override
     public boolean css$charTypedRenameOverlay(char codePoint, int modifiers) {
+        if (!css$isSyncScheduleScreen()) {
+            return false;
+        }
+
         if (!css$renameOverlayOpen) {
             return false;
         }
