@@ -305,6 +305,7 @@ public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
     private void css$requestSyncIds(CallbackInfo callback) {
         ScheduleSyncClientState.clear();
         css$idScrollOffset = 0;
+        css$closeRenameOverlay();
 
         if (!css$isSyncScheduleScreen()) {
             return;
