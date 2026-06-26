@@ -8,8 +8,11 @@
     "ScheduleEditPacketMixin",
     "ScheduleItemMixin",
     "ScheduleRuntimeMixin",
-    "StationBlockEntityMixin",
-    "ScheduleScreenMixin"
+    "StationBlockEntityMixin"
+  ],
+  "client": [
+    "ScheduleScreenMixin",
+    "ScreenCharTypedMixin"
   ],
   "injectors": {
     "defaultRequire": 1

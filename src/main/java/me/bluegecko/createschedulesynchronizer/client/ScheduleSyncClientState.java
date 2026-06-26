@@ -7,20 +7,20 @@ import java.util.List;
 import java.util.UUID;
 
 public final class ScheduleSyncClientState {
-    private static final List<UUID> IDS = new ArrayList<>();
+    private static final List<ScheduleSyncEntry> ENTRIES = new ArrayList<>();
     private static UUID currentId;
     private static CompoundTag pendingScheduleTag;
 
     private ScheduleSyncClientState() {
     }
 
-    public static void setIds(List<UUID> ids) {
-        IDS.clear();
-        IDS.addAll(ids);
+    public static void setEntries(List<ScheduleSyncEntry> entries) {
+        ENTRIES.clear();
+        ENTRIES.addAll(entries);
     }
 
-    public static List<UUID> getIds() {
-        return List.copyOf(IDS);
+    public static List<ScheduleSyncEntry> getEntries() {
+        return List.copyOf(ENTRIES);
     }
 
     public static void setCurrentId(UUID id) {
@@ -29,6 +29,20 @@ public final class ScheduleSyncClientState {
 
     public static UUID getCurrentId() {
         return currentId;
+    }
+
+    public static ScheduleSyncEntry getCurrentEntry() {
+        if (currentId == null) {
+            return null;
+        }
+
+        for (ScheduleSyncEntry entry : ENTRIES) {
+            if (currentId.equals(entry.id())) {
+                return entry;
+            }
+        }
+
+        return null;
     }
 
     public static void setPendingScheduleTag(CompoundTag tag) {
@@ -42,7 +56,7 @@ public final class ScheduleSyncClientState {
     }
 
     public static void clear() {
-        IDS.clear();
+        ENTRIES.clear();
         currentId = null;
         pendingScheduleTag = null;
     }

@@ -1,11 +1,16 @@
 package me.bluegecko.createschedulesynchronizer.mixin;
 
 import com.simibubi.create.content.trains.schedule.Schedule;
+import com.simibubi.create.content.trains.schedule.ScheduleEntry;
 import com.simibubi.create.content.trains.schedule.ScheduleScreen;
 import me.bluegecko.createschedulesynchronizer.client.ScheduleSyncClientState;
+import me.bluegecko.createschedulesynchronizer.client.ScheduleSyncEntry;
+import me.bluegecko.createschedulesynchronizer.compat.RenameOverlayHandler;
 import me.bluegecko.createschedulesynchronizer.network.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -22,7 +27,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Mixin(value = ScheduleScreen.class, remap = false)
-public abstract class ScheduleScreenMixin {
+public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
     @Unique
     private static final int CSS_PANEL_WIDTH = 92;
 
@@ -39,10 +44,159 @@ public abstract class ScheduleScreenMixin {
     private int css$idScrollOffset;
 
     @Unique
+    private boolean css$renameOverlayOpen;
+
+    @Unique
+    private ScheduleSyncEntry css$renameTarget;
+
+    @Unique
+    private EditBox css$renameEditBox;
+
+    @Unique
+    private void css$openRenameOverlay(ScheduleSyncEntry target) {
+        Minecraft minecraft = Minecraft.getInstance();
+
+        css$renameOverlayOpen = true;
+        css$renameTarget = target;
+
+        int boxWidth = 220;
+        int boxHeight = 20;
+        Screen screen = (Screen) (Object) this;
+        int x = (screen.width - boxWidth) / 2;
+        int y = (screen.height - boxHeight) / 2;
+
+        css$renameEditBox = new EditBox(
+                minecraft.font,
+                x,
+                y,
+                boxWidth,
+                boxHeight,
+                Component.literal("Schedule name")
+        );
+
+        css$renameEditBox.setMaxLength(32);
+        css$renameEditBox.setValue(target.name());
+        css$renameEditBox.setFocused(true);
+    }
+
+    @Unique
+    private void css$closeRenameOverlay() {
+        css$renameOverlayOpen = false;
+        css$renameTarget = null;
+        css$renameEditBox = null;
+    }
+
+    @Unique
+    private void css$submitRenameOverlay() {
+        if (css$renameTarget == null || css$renameEditBox == null) {
+            css$closeRenameOverlay();
+            return;
+        }
+
+        PacketDistributor.sendToServer(
+                new RenameScheduleSyncIdPayload(
+                        css$renameTarget.id(),
+                        css$renameEditBox.getValue()
+                )
+        );
+
+        css$closeRenameOverlay();
+    }
+
+    @Unique
     private void css$clampIdScrollOffset() {
         int maxRows = 4;
-        int maxOffset = Math.max(0, ScheduleSyncClientState.getIds().size() - maxRows);
+        int maxOffset = Math.max(0, ScheduleSyncClientState.getEntries().size() - maxRows);
         css$idScrollOffset = Math.clamp(css$idScrollOffset, 0, maxOffset);
+    }
+
+    @Unique
+    private void css$renderRenameOverlay(
+            GuiGraphics graphics,
+            int mouseX,
+            int mouseY
+    ) {
+        Minecraft minecraft = Minecraft.getInstance();
+        Screen screen = (Screen) (Object) this;
+
+        graphics.fill(0, 0, screen.width, screen.height, 0xAA000000);
+
+        int panelWidth = 260;
+        int panelHeight = 94;
+        int panelX = (screen.width - panelWidth) / 2;
+        int panelY = (screen.height - panelHeight) / 2;
+
+        graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xFF202020);
+        graphics.renderOutline(panelX, panelY, panelWidth, panelHeight, 0xFFFFFFFF);
+
+        graphics.drawString(
+                minecraft.font,
+                Component.literal("Rename schedule"),
+                panelX + 12,
+                panelY + 10,
+                0xFFFFFFFF,
+                false
+        );
+
+        if (css$renameEditBox != null) {
+            css$renameEditBox.renderWidget(graphics, mouseX, mouseY, 0);
+        }
+
+        int renameX = panelX + 52;
+        int cancelX = panelX + 138;
+        int buttonY = panelY + 62;
+
+        css$drawOverlayButton(
+                graphics,
+                minecraft,
+                renameX,
+                buttonY,
+                72,
+                18,
+                "Rename",
+                css$isInside(mouseX, mouseY, renameX, buttonY, 72, 18)
+        );
+
+        css$drawOverlayButton(
+                graphics,
+                minecraft,
+                cancelX,
+                buttonY,
+                72,
+                18,
+                "Cancel",
+                css$isInside(mouseX, mouseY, cancelX, buttonY, 72, 18)
+        );
+    }
+
+    @Unique
+    private static void css$drawOverlayButton(
+            GuiGraphics graphics,
+            Minecraft minecraft,
+            int x,
+            int y,
+            int width,
+            int height,
+            String label,
+            boolean hovered
+    ) {
+        graphics.fill(
+                x,
+                y,
+                x + width,
+                y + height,
+                hovered ? 0xFF5A6F8F : 0xFF3E4A5C
+        );
+
+        graphics.renderOutline(x, y, width, height, 0xFFFFFFFF);
+
+        graphics.drawCenteredString(
+                minecraft.font,
+                Component.literal(label),
+                x + width / 2,
+                y + 5,
+                0xFFFFFFFF
+        );
     }
 
     @Shadow
@@ -50,6 +204,9 @@ public abstract class ScheduleScreenMixin {
 
     @Shadow
     protected abstract void init();
+
+    @Shadow
+    public abstract int renderScheduleEntry(GuiGraphics graphics, ScheduleEntry entry, int yOffset, int mouseX, int mouseY, float partialTicks);
 
     @Inject(method = "init", at = @At("TAIL"))
     private void css$requestSyncIds(CallbackInfo callback) {
@@ -99,8 +256,8 @@ public abstract class ScheduleScreenMixin {
             return;
         }
 
-        List<UUID> ids = ScheduleSyncClientState.getIds();
-        int maxOffset = Math.max(0, ids.size() - maxRows);
+        List<ScheduleSyncEntry> entries = ScheduleSyncClientState.getEntries();
+        int maxOffset = Math.max(0, entries.size() - maxRows);
 
         if (maxOffset <= 0) {
             return;
@@ -156,18 +313,17 @@ public abstract class ScheduleScreenMixin {
                 false
         );
 
-        UUID currentId = ScheduleSyncClientState.getCurrentId();
+        ScheduleSyncEntry currentEntry = ScheduleSyncClientState.getCurrentEntry();
 
-        String currentText = currentId == null
+        String currentText = currentEntry == null
                 ? "Current: none"
-                : "Current: " + currentId.toString().substring(0, 8);
-
+                : "Current: " + currentEntry.name();
         graphics.drawString(
                 minecraft.font,
                 Component.literal(currentText),
                 panelX + 6,
                 panelY + 18,
-                currentId == null ? 0xFF808080 : 0xFF90D090,
+                currentEntry == null ? 0xFF808080 : 0xFF90D090,
                 false
         );
 
@@ -277,7 +433,7 @@ public abstract class ScheduleScreenMixin {
         );
 
         css$clampIdScrollOffset();
-        List<UUID> ids = ScheduleSyncClientState.getIds();
+        List<ScheduleSyncEntry> entries = ScheduleSyncClientState.getEntries();
 
         graphics.drawString(
                 minecraft.font,
@@ -292,14 +448,14 @@ public abstract class ScheduleScreenMixin {
         int listY = css$idListY(screen);
 
         int maxRows = 4;
-        int visibleCount = Math.clamp(ids.size() - css$idScrollOffset, 0, maxRows);
+        int visibleCount = Math.clamp(entries.size() - css$idScrollOffset, 0, maxRows);
 
         for (int row = 0; row < visibleCount; row++) {
             int index = css$idScrollOffset + row;
-            UUID id = ids.get(index);
+            ScheduleSyncEntry entry = entries.get(index);
             int rowY = listY + row * css$idRowHeight();
 
-            boolean selected = id.equals(currentId);
+            boolean selected = entry.equals(currentEntry);
             boolean idHovered = css$isInside(
                     mouseX,
                     mouseY,
@@ -319,7 +475,7 @@ public abstract class ScheduleScreenMixin {
                 );
             }
 
-            String text = id.toString().substring(0, 8);
+            String text = entry.name();
 
             graphics.drawString(
                     minecraft.font,
@@ -331,8 +487,8 @@ public abstract class ScheduleScreenMixin {
             );
         }
 
-        if (ids.size() > maxRows) {
-            String scrollText = (css$idScrollOffset + 1) + "-" + (css$idScrollOffset + visibleCount) + "/" + ids.size();
+        if (entries.size() > maxRows) {
+            String scrollText = (css$idScrollOffset + 1) + "-" + (css$idScrollOffset + visibleCount) + "/" + entries.size();
 
             graphics.drawString(
                     minecraft.font,
@@ -343,6 +499,10 @@ public abstract class ScheduleScreenMixin {
                     false
             );
         }
+
+        if (css$renameOverlayOpen) {
+            css$renderRenameOverlay(graphics, mouseX, mouseY);
+        }
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
@@ -352,7 +512,40 @@ public abstract class ScheduleScreenMixin {
             int button,
             CallbackInfoReturnable<Boolean> callback
     ) {
-        if (button != 0) {
+        if (css$renameOverlayOpen) {
+            Screen screen = (Screen) (Object) this;
+
+            int panelWidth = 260;
+            int panelHeight = 94;
+            int panelX = (screen.width - panelWidth) / 2;
+            int panelY = (screen.height - panelHeight) / 2;
+
+            int renameX = panelX + 52;
+            int cancelX = panelX + 138;
+            int buttonY = panelY + 62;
+
+            if (css$renameEditBox != null && css$renameEditBox.mouseClicked(mouseX, mouseY, button)) {
+                callback.setReturnValue(true);
+                return;
+            }
+
+            if (button == 0 && css$isInside(mouseX, mouseY, renameX, buttonY, 72, 18)) {
+                css$submitRenameOverlay();
+                callback.setReturnValue(true);
+                return;
+            }
+
+            if (button == 0 && css$isInside(mouseX, mouseY, cancelX, buttonY, 72, 18)) {
+                css$closeRenameOverlay();
+                callback.setReturnValue(true);
+                return;
+            }
+
+            callback.setReturnValue(true);
+            return;
+        }
+
+        if (button != 0 && button != 1) {
             return;
         }
 
@@ -365,7 +558,7 @@ public abstract class ScheduleScreenMixin {
         int saveButtonX = css$saveButtonX(screen);
         int saveButtonY = css$saveButtonY(screen);
 
-        if (css$isInside(
+        if (button == 0 && css$isInside(
                 mouseX,
                 mouseY,
                 saveButtonX,
@@ -381,7 +574,7 @@ public abstract class ScheduleScreenMixin {
         int newButtonX = css$newButtonX(screen);
         int newButtonY = css$newButtonY(screen);
 
-        if (css$isInside(
+        if (button == 0 && css$isInside(
                 mouseX,
                 mouseY,
                 newButtonX,
@@ -396,7 +589,7 @@ public abstract class ScheduleScreenMixin {
         int unlinkButtonX = css$unlinkButtonX(screen);
         int unlinkButtonY = css$unlinkButtonY(screen);
 
-        if (css$isInside(
+        if (button == 0 && css$isInside(
                 mouseX,
                 mouseY,
                 unlinkButtonX,
@@ -409,19 +602,19 @@ public abstract class ScheduleScreenMixin {
             return;
         }
 
-        List<UUID> ids = ScheduleSyncClientState.getIds();
+        List<ScheduleSyncEntry> entries = ScheduleSyncClientState.getEntries();
 
         int listX = css$idListX(screen);
         int listY = css$idListY(screen);
 
         int maxRows = 4;
-        int visibleCount = Math.clamp(ids.size() - css$idScrollOffset, 0, maxRows);
+        int visibleCount = Math.clamp(entries.size() - css$idScrollOffset, 0, maxRows);
 
         for (int row = 0; row < visibleCount; row++) {
             int index = css$idScrollOffset + row;
             int rowY = listY + row * css$idRowHeight();
 
-            if (!css$isInside(
+            if (button == 0 && !css$isInside(
                     mouseX,
                     mouseY,
                     listX,
@@ -432,14 +625,52 @@ public abstract class ScheduleScreenMixin {
                 continue;
             }
 
-            UUID selectedId = ids.get(index);
+            ScheduleSyncEntry selectedEntry = entries.get(index);
 
-            PacketDistributor.sendToServer(new LinkScheduleSyncIdPayload(selectedId));
+            if (button == 1) {
+                css$openRenameOverlay(selectedEntry);
+                callback.setReturnValue(true);
+                return;
+            }
 
+            if (button == 0) {
+                PacketDistributor.sendToServer(new LinkScheduleSyncIdPayload(selectedEntry.id()));
+                callback.setReturnValue(true);
+                return;
+            }
+        }
+
+    }
+
+    @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
+    private void css$handleRenameOverlayKeyPressed(
+            int keyCode,
+            int scanCode,
+            int modifiers,
+            CallbackInfoReturnable<Boolean> callback
+    ) {
+        if (!css$renameOverlayOpen) {
+            return;
+        }
+
+        if (keyCode == 256) { // ESC
+            css$closeRenameOverlay();
             callback.setReturnValue(true);
             return;
         }
 
+        if (keyCode == 257 || keyCode == 335) { // ENTER / NUMPAD_ENTER
+            css$submitRenameOverlay();
+            callback.setReturnValue(true);
+            return;
+        }
+
+        if (css$renameEditBox != null && css$renameEditBox.keyPressed(keyCode, scanCode, modifiers)) {
+            callback.setReturnValue(true);
+            return;
+        }
+
+        callback.setReturnValue(true);
     }
 
     @Unique
@@ -515,5 +746,18 @@ public abstract class ScheduleScreenMixin {
     @Unique
     private static int css$unlinkButtonY(AbstractContainerScreen<?> screen) {
         return css$panelY(screen) + 86;
+    }
+
+    @Override
+    public boolean css$charTypedRenameOverlay(char codePoint, int modifiers) {
+        if (!css$renameOverlayOpen) {
+            return false;
+        }
+
+        if (css$renameEditBox != null) {
+            css$renameEditBox.charTyped(codePoint, modifiers);
+        }
+
+        return true;
     }
 }
