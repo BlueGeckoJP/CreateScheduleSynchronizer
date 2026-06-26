@@ -1,13 +1,19 @@
 package me.bluegecko.createschedulesynchronizer.mixin;
 
+import com.simibubi.create.Create;
+import com.simibubi.create.content.trains.entity.AddTrainPacket;
 import com.simibubi.create.content.trains.schedule.ScheduleRuntime;
 import com.tterrag.registrate.util.entry.ItemEntry;
+import me.bluegecko.createschedulesynchronizer.compat.RunningTrainScheduleSync;
 import me.bluegecko.createschedulesynchronizer.compat.ScheduleCompatibility;
 import me.bluegecko.createschedulesynchronizer.compat.ScheduleSourceTracker;
 import me.bluegecko.createschedulesynchronizer.item.ModItems;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,15 +33,27 @@ public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
     private static final String CSS_SYNC_ID_KEY = "CreateScheduleSynchronizerSyncId";
 
     @Unique
+    private static final String CSS_PENDING_SCHEDULE_KEY = "CreateScheduleSynchronizerPendingSchedule";
+
+    @Unique
     private boolean css$synchronizedSchedule;
 
     @Unique
     private UUID css$syncId;
 
+    @Unique
+    private CompoundTag css$pendingScheduleUpdate;
+
     @Override
     public void css$setScheduleSource(ItemStack source) {
         css$synchronizedSchedule = ScheduleCompatibility.isSynchronizedSchedule(source);
         css$syncId = css$synchronizedSchedule ? ScheduleCompatibility.getSyncId(source) : null;
+    }
+
+    @Override
+    public void css$setSynchronizedScheduleSource(UUID syncId) {
+        css$synchronizedSchedule = syncId != null;
+        css$syncId = syncId;
     }
 
     @Override
@@ -46,6 +64,16 @@ public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
     @Override
     public UUID css$getScheduleSyncId() {
         return css$syncId;
+    }
+
+    @Override
+    public void css$queueScheduleUpdate(CompoundTag scheduleTag) {
+        css$pendingScheduleUpdate = scheduleTag.copy();
+    }
+
+    @Override
+    public boolean css$hasPendingScheduleUpdate() {
+        return css$pendingScheduleUpdate != null;
     }
 
     /**
@@ -70,6 +98,44 @@ public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
         return returnedStack;
     }
 
+    @Inject(method = "tick", at = @At("HEAD"))
+    private void css$applyPendingScheduleWhenStopped(
+            Level level,
+            CallbackInfo callback
+    ) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        if (css$pendingScheduleUpdate == null) {
+            return;
+        }
+
+        if (!css$synchronizedSchedule || css$syncId == null) {
+            css$pendingScheduleUpdate = null;
+            return;
+        }
+
+        ScheduleRuntime runtime = (ScheduleRuntime) (Object) this;
+
+        if (runtime.state == ScheduleRuntime.State.IN_TRANSIT) {
+            return;
+        }
+
+        CompoundTag pending = css$pendingScheduleUpdate.copy();
+        css$pendingScheduleUpdate = null;
+
+        RunningTrainScheduleSync.applyNow(
+                serverLevel.registryAccess(),
+                runtime,
+                this,
+                css$syncId,
+                pending
+        );
+
+        Create.RAILWAYS.sided(serverLevel).markTracksDirty();
+    }
+
     /**
      * When saving a train, save whether the source provider was the synchronized system
      * and store the sync_id.
@@ -81,14 +147,16 @@ public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
     ) {
         CompoundTag tag = callback.getReturnValue();
 
-        if (!css$synchronizedSchedule) {
-            return;
+        if (css$synchronizedSchedule) {
+            tag.putBoolean(CSS_SOURCE_KEY, true);
+
+            if (css$syncId != null) {
+                tag.putUUID(CSS_SYNC_ID_KEY, css$syncId);
+            }
         }
 
-        tag.putBoolean(CSS_SOURCE_KEY, true);
-
-        if (css$syncId != null) {
-            tag.putUUID(CSS_SYNC_ID_KEY, css$syncId);
+        if (css$pendingScheduleUpdate != null) {
+            tag.put(CSS_PENDING_SCHEDULE_KEY, css$pendingScheduleUpdate.copy());
         }
     }
 
@@ -103,6 +171,8 @@ public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
     ) {
         css$synchronizedSchedule = tag.getBoolean(CSS_SOURCE_KEY);
         css$syncId = css$synchronizedSchedule && tag.hasUUID(CSS_SYNC_ID_KEY) ? tag.getUUID(CSS_SYNC_ID_KEY) : null;
+
+        css$pendingScheduleUpdate = tag.contains(CSS_PENDING_SCHEDULE_KEY, Tag.TAG_COMPOUND) ? tag.getCompound(CSS_PENDING_SCHEDULE_KEY).copy() : null;
     }
 
     /**
@@ -112,5 +182,6 @@ public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
     private void css$clearSource(CallbackInfo callback) {
         css$synchronizedSchedule = false;
         css$syncId = null;
+        css$pendingScheduleUpdate = null;
     }
 }

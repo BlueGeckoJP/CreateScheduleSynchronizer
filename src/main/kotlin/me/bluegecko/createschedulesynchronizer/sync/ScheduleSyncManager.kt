@@ -3,6 +3,7 @@ package me.bluegecko.createschedulesynchronizer.sync
 import com.simibubi.create.AllDataComponents
 import com.simibubi.create.content.redstone.displayLink.LinkWithBulbBlockEntity
 import com.simibubi.create.content.trains.schedule.Schedule
+import me.bluegecko.createschedulesynchronizer.compat.RunningTrainScheduleSync
 import me.bluegecko.createschedulesynchronizer.item.SynchronizedScheduleItem
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
@@ -77,6 +78,12 @@ object ScheduleSyncManager {
         stack.set(AllDataComponents.TRAIN_SCHEDULE, scheduleTag.copy())
         ScheduleSyncSavedData.get(level).putScheduleTag(syncId, scheduleTag.copy())
 
+        RunningTrainScheduleSync.applyToLinkedTrains(
+            level,
+            syncId,
+            scheduleTag.copy()
+        )
+
         return SaveResult.SAVED
     }
 
@@ -94,6 +101,12 @@ object ScheduleSyncManager {
         val scheduleTag = stack.get(AllDataComponents.TRAIN_SCHEDULE) ?: Schedule().write(level.registryAccess())
 
         ScheduleSyncSavedData.get(level).putScheduleTag(syncId, scheduleTag.copy())
+
+        RunningTrainScheduleSync.applyToLinkedTrains(
+            level,
+            syncId,
+            scheduleTag.copy()
+        )
 
         return SaveResult.SAVED
     }
