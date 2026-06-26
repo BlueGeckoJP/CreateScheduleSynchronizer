@@ -1,3 +1,4 @@
 {
-  "item.createschedulesynchronizer.synchronized_schedule": "Synchronized Train Schedule"
+  "item.createschedulesynchronizer.synchronized_schedule": "Synchronized Train Schedule",
+  "itemGroup.createschedulesynchronizer.main": "Synchronized Train Schedule"
 }

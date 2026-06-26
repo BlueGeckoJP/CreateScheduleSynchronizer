@@ -1,3 +1,4 @@
 {
-  "item.createschedulesynchronizer.synchronized_schedule": "同期式鉄道時刻表"
+  "item.createschedulesynchronizer.synchronized_schedule": "同期式鉄道時刻表",
+  "itemGroup.createschedulesynchronizer.main": "同期式鉄道時刻表"
 }

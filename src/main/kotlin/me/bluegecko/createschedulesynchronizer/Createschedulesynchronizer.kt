@@ -1,6 +1,7 @@
 package me.bluegecko.createschedulesynchronizer
 
 import me.bluegecko.createschedulesynchronizer.data.ModDataComponents
+import me.bluegecko.createschedulesynchronizer.item.ModCreativeTabs
 import me.bluegecko.createschedulesynchronizer.item.ModItems
 import me.bluegecko.createschedulesynchronizer.network.ModNetworking
 import net.neoforged.bus.api.SubscribeEvent
@@ -31,6 +32,7 @@ object Createschedulesynchronizer {
     init {
         ModDataComponents.REGISTRY.register(MOD_BUS)
         ModItems.REGISTRY.register(MOD_BUS)
+        ModCreativeTabs.REGISTRY.register(MOD_BUS)
     }
 
     /**
