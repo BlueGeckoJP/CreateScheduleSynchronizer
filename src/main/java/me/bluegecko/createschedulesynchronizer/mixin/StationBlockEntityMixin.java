@@ -8,6 +8,8 @@ import com.tterrag.registrate.util.entry.ItemEntry;
 import me.bluegecko.createschedulesynchronizer.compat.ScheduleCompatibility;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -41,9 +43,9 @@ public abstract class StationBlockEntityMixin {
 
     @Inject(method = "applyAutoSchedule", at = @At("HEAD"))
     private void css$syncBeforeStationScheduleRead(CallbackInfo callback) {
-        Object self = this;
+        Level level = ((BlockEntity) (Object) this).getLevel();
 
-        if (((StationBlockEntity) self).getLevel() instanceof ServerLevel serverLevel) {
+        if (level instanceof ServerLevel serverLevel) {
             ScheduleCompatibility.syncFromStoreIfPossible(
                     getAutoSchedule(),
                     serverLevel
