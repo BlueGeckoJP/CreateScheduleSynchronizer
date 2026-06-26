@@ -79,18 +79,22 @@ class SynchronizedScheduleItem(properties: Properties) : ScheduleItem(properties
     }
 
     companion object {
+        @JvmStatic
         fun getSyncId(stack: ItemStack): UUID? {
             return stack.get(ModDataComponents.SYNC_ID.get())
         }
 
+        @JvmStatic
         fun setSyncId(stack: ItemStack, syncId: UUID) {
             stack.set(ModDataComponents.SYNC_ID.get(), syncId)
         }
 
+        @JvmStatic
         fun clearSyncId(stack: ItemStack) {
             stack.remove(ModDataComponents.SYNC_ID.get())
         }
 
+        @JvmStatic
         fun isLinked(stack: ItemStack): Boolean {
             return getSyncId(stack) != null
         }

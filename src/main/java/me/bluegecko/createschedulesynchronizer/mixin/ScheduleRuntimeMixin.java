@@ -16,17 +16,26 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.UUID;
+
 @Mixin(value = ScheduleRuntime.class, remap = false)
 public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
     @Unique
     private static final String CSS_SOURCE_KEY = "CreateScheduleSynchronizerSynchronized";
 
     @Unique
+    private static final String CSS_SYNC_ID_KEY = "CreateScheduleSynchronizerSyncId";
+
+    @Unique
     private boolean css$synchronizedSchedule;
+
+    @Unique
+    private UUID css$syncId;
 
     @Override
     public void css$setScheduleSource(ItemStack source) {
         css$synchronizedSchedule = ScheduleCompatibility.isSynchronizedSchedule(source);
+        css$syncId = css$synchronizedSchedule ? ScheduleCompatibility.getSyncId(source) : null;
     }
 
     @Override
@@ -34,10 +43,16 @@ public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
         return css$synchronizedSchedule;
     }
 
+    @Override
+    public UUID css$getScheduleSyncId() {
+        return css$syncId;
+    }
+
     /**
-     * If it originates from original, generate an original train schedule;
-     * if it originates from the synchronized, generate a synchronized train schedule.
-     */
+    * When removing a Schedule from a train, return it as a synchronized item
+    * if its source provider is the synchronized system.
+    * Also restore the sync_id to the returned ItemStack at this point.
+    */
     @Redirect(
             method = "returnSchedule",
             at = @At(
@@ -45,27 +60,40 @@ public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
                     target = "Lcom/tterrag/registrate/util/entry/ItemEntry;" + "asStack()Lnet/minecraft/world/item/ItemStack;"
             )
     )
-    private ItemStack createSynchronizedSchedule(ItemEntry<?> ignored) {
-        if (css$synchronizedSchedule) {
-            return ModItems.INSTANCE.getSYNCHRONIZED_SCHEDULE().toStack();
+    private ItemStack css$createReturnedScheduleStack(ItemEntry<?> originalScheduleEntry) {
+        ItemStack returnedStack = css$synchronizedSchedule ? ModItems.INSTANCE.getSYNCHRONIZED_SCHEDULE().toStack() : originalScheduleEntry.asStack();
+
+        if (css$synchronizedSchedule && css$syncId != null) {
+            ScheduleCompatibility.setSyncId(returnedStack, css$syncId);
         }
 
-        return ignored.asStack();
+        return returnedStack;
     }
 
     /**
-     * Save the source provider to the train save NBT.
+     * When saving a train, save whether the source provider was the synchronized system
+     * and store the sync_id.
      */
     @Inject(method = "write", at = @At("RETURN"))
     private void css$writeSource(
             HolderLookup.Provider registries,
             CallbackInfoReturnable<CompoundTag> callback
     ) {
-        callback.getReturnValue().putBoolean(CSS_SOURCE_KEY, css$synchronizedSchedule);
+        CompoundTag tag = callback.getReturnValue();
+
+        if (!css$synchronizedSchedule) {
+            return;
+        }
+
+        tag.putBoolean(CSS_SOURCE_KEY, true);
+
+        if (css$syncId != null) {
+            tag.putUUID(CSS_SYNC_ID_KEY, css$syncId);
+        }
     }
 
     /**
-     * Restore the source provider when loading the train.
+     * Restore the sync_id to the train runtime when loading the world.
      */
     @Inject(method = "read", at = @At("RETURN"))
     private void css$readSource(
@@ -74,13 +102,15 @@ public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
             CallbackInfo callback
     ) {
         css$synchronizedSchedule = tag.getBoolean(CSS_SOURCE_KEY);
+        css$syncId = css$synchronizedSchedule && tag.hasUUID(CSS_SYNC_ID_KEY) ? tag.getUUID(CSS_SYNC_ID_KEY) : null;
     }
 
     /**
-     * Do not keep stale source provider information after the Schedule is discarded.
+     * Do not leave stale source provider information after discarding the Schedule.
      */
     @Inject(method = "discardSchedule", at = @At("RETURN"))
     private void css$clearSource(CallbackInfo callback) {
         css$synchronizedSchedule = false;
+        css$syncId = null;
     }
 }
