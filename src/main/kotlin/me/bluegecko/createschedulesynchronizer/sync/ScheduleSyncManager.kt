@@ -230,4 +230,26 @@ object ScheduleSyncManager {
         val result: LinkResult,
         val scheduleTag: CompoundTag?
     )
+
+    @JvmStatic
+    fun unlinkMainHand(player: ServerPlayer): UnlinkResult {
+        return unlinkItem(player.mainHandItem)
+    }
+
+    @JvmStatic
+    fun unlinkItem(stack: ItemStack): UnlinkResult {
+        if (stack.item !is SynchronizedScheduleItem) {
+            return UnlinkResult.NOT_SYNCHRONIZED_SCHEDULE
+        }
+
+        SynchronizedScheduleItem.clearSyncId(stack)
+        stack.remove(AllDataComponents.TRAIN_SCHEDULE)
+
+        return UnlinkResult.UNLINKED
+    }
+
+    enum class UnlinkResult {
+        NOT_SYNCHRONIZED_SCHEDULE,
+        UNLINKED,
+    }
 }

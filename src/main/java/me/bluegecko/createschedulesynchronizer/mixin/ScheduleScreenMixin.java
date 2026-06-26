@@ -3,10 +3,7 @@ package me.bluegecko.createschedulesynchronizer.mixin;
 import com.simibubi.create.content.trains.schedule.Schedule;
 import com.simibubi.create.content.trains.schedule.ScheduleScreen;
 import me.bluegecko.createschedulesynchronizer.client.ScheduleSyncClientState;
-import me.bluegecko.createschedulesynchronizer.network.LinkScheduleSyncIdPayload;
-import me.bluegecko.createschedulesynchronizer.network.NewScheduleSyncIdPayload;
-import me.bluegecko.createschedulesynchronizer.network.RequestScheduleSyncIdsPayload;
-import me.bluegecko.createschedulesynchronizer.network.SaveScheduleSyncPayload;
+import me.bluegecko.createschedulesynchronizer.network.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -30,7 +27,7 @@ public abstract class ScheduleScreenMixin {
     private static final int CSS_PANEL_WIDTH = 92;
 
     @Unique
-    private static final int CSS_PANEL_HEIGHT = 136;
+    private static final int CSS_PANEL_HEIGHT = 160;
 
     @Unique
     private static final int CSS_BUTTON_WIDTH = 72;
@@ -40,6 +37,9 @@ public abstract class ScheduleScreenMixin {
 
     @Shadow
     private Schedule schedule;
+
+    @Shadow
+    protected abstract void init();
 
     @Inject(method = "init", at = @At("TAIL"))
     private void css$requestSyncIds(CallbackInfo callback) {
@@ -58,6 +58,8 @@ public abstract class ScheduleScreenMixin {
                 Minecraft.getInstance().player.registryAccess(),
                 pending
         );
+
+        init();
     }
 
     @Inject(method = "render", at = @At("TAIL"))
@@ -169,13 +171,48 @@ public abstract class ScheduleScreenMixin {
                 0xFFFFFFFF
         );
 
+        int unlinkButtonX = css$unlinkButtonX(screen);
+        int unlinkButtonY = css$unlinkButtonY(screen);
+        boolean unlinkHovered = css$isInside(
+                mouseX,
+                mouseY,
+                unlinkButtonX,
+                unlinkButtonY,
+                CSS_BUTTON_WIDTH,
+                CSS_BUTTON_HEIGHT
+        );
+
+        graphics.fill(
+                unlinkButtonX,
+                unlinkButtonY,
+                unlinkButtonX + CSS_BUTTON_WIDTH,
+                unlinkButtonY + CSS_BUTTON_HEIGHT,
+                unlinkHovered ? 0xFF8F5A5A : 0xFF5C3E3E
+        );
+
+        graphics.renderOutline(
+                unlinkButtonX,
+                unlinkButtonY,
+                CSS_BUTTON_WIDTH,
+                CSS_BUTTON_HEIGHT,
+                0xFFFFFFFF
+        );
+
+        graphics.drawCenteredString(
+                minecraft.font,
+                Component.literal("Unlink"),
+                unlinkButtonX + CSS_BUTTON_WIDTH / 2,
+                unlinkButtonY + 5,
+                0xFFFFFFFF
+        );
+
         List<UUID> ids = ScheduleSyncClientState.getIds();
 
         graphics.drawString(
                 minecraft.font,
                 Component.literal("IDs"),
                 panelX + 6,
-                panelY + 76,
+                panelY + 100,
                 0xFFE0E0E0,
                 false
         );
@@ -279,6 +316,22 @@ public abstract class ScheduleScreenMixin {
             callback.setReturnValue(true);
         }
 
+        int unlinkButtonX = css$unlinkButtonX(screen);
+        int unlinkButtonY = css$unlinkButtonY(screen);
+
+        if (css$isInside(
+                mouseX,
+                mouseY,
+                unlinkButtonX,
+                unlinkButtonY,
+                CSS_BUTTON_WIDTH,
+                CSS_BUTTON_HEIGHT
+        )) {
+            PacketDistributor.sendToServer(new UnlinkScheduleSyncIdPayload());
+            callback.setReturnValue(true);
+            return;
+        }
+
         List<UUID> ids = ScheduleSyncClientState.getIds();
 
         int listX = css$idListX(screen);
@@ -361,7 +414,7 @@ public abstract class ScheduleScreenMixin {
 
     @Unique
     private static int css$idListY(AbstractContainerScreen<?> screen) {
-        return css$panelY(screen) + 88;
+        return css$panelY(screen) + 112;
     }
 
     @Unique
@@ -372,5 +425,15 @@ public abstract class ScheduleScreenMixin {
     @Unique
     private static int css$idRowHeight() {
         return 10;
+    }
+
+    @Unique
+    private static int css$unlinkButtonX(AbstractContainerScreen<?> screen) {
+        return css$panelX(screen) + 10;
+    }
+
+    @Unique
+    private static int css$unlinkButtonY(AbstractContainerScreen<?> screen) {
+        return css$panelY(screen) + 74;
     }
 }
