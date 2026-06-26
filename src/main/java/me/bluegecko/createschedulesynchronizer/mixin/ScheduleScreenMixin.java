@@ -119,6 +119,9 @@ public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
         Minecraft minecraft = Minecraft.getInstance();
         Screen screen = (Screen) (Object) this;
 
+        graphics.pose().pushPose();
+        graphics.pose().translate(0, 0, 500);
+
         graphics.fill(0, 0, screen.width, screen.height, 0xAA000000);
 
         int panelWidth = 260;
@@ -167,6 +170,8 @@ public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
                 "Cancel",
                 css$isInside(mouseX, mouseY, cancelX, buttonY, 72, 18)
         );
+
+        graphics.pose().popPose();
     }
 
     @Unique
