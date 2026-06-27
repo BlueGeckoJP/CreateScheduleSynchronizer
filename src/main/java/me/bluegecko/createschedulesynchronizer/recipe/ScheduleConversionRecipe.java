@@ -81,7 +81,10 @@ public abstract class ScheduleConversionRecipe extends CustomRecipe {
         CompoundTag scheduleTag = source.get(AllDataComponents.TRAIN_SCHEDULE);
 
         if (scheduleTag != null) {
-            result.set(AllDataComponents.TRAIN_SCHEDULE, scheduleTag.copy());
+            result.set(
+                    AllDataComponents.TRAIN_SCHEDULE,
+                    scheduleTag.copy()
+            );
         }
     }
 

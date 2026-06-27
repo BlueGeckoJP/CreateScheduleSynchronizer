@@ -38,7 +38,14 @@ object ScheduleSyncManager {
 
         val localSchedule = stack.get(AllDataComponents.TRAIN_SCHEDULE)
         if (localSchedule != null) {
-            store.putScheduleTag(owner, syncId, localSchedule.copy())
+            val normalized = ScheduleTagSanitizer.forSyncStore(
+                level.registryAccess(),
+                localSchedule,
+            )
+
+            store.putScheduleTag(owner, syncId, normalized.copy())
+            stack.set(AllDataComponents.TRAIN_SCHEDULE, normalized.copy())
+
             return true
         }
 
@@ -79,15 +86,20 @@ object ScheduleSyncManager {
 
         val syncId = SynchronizedScheduleItem.getSyncId(stack) ?: return SaveResult.NOT_LINKED
 
+        val normalized = ScheduleTagSanitizer.forSyncStore(
+            level.registryAccess(),
+            scheduleTag,
+        )
+
         SynchronizedScheduleItem.setSyncOwner(stack, owner)
-        stack.set(AllDataComponents.TRAIN_SCHEDULE, scheduleTag.copy())
-        ScheduleSyncSavedData.get(level).putScheduleTag(owner, syncId, scheduleTag.copy())
+        stack.set(AllDataComponents.TRAIN_SCHEDULE, normalized.copy())
+        ScheduleSyncSavedData.get(level).putScheduleTag(owner, syncId, normalized.copy())
 
         RunningTrainScheduleSync.applyToLinkedTrains(
             level,
             owner,
             syncId,
-            scheduleTag.copy()
+            normalized.copy()
         )
 
         return SaveResult.SAVED
@@ -106,15 +118,20 @@ object ScheduleSyncManager {
         val syncId = SynchronizedScheduleItem.getSyncId(stack) ?: return SaveResult.NOT_LINKED
 
         val scheduleTag = stack.get(AllDataComponents.TRAIN_SCHEDULE) ?: Schedule().write(level.registryAccess())
+        val normalized = ScheduleTagSanitizer.forSyncStore(
+            level.registryAccess(),
+            scheduleTag,
+        )
 
         SynchronizedScheduleItem.setSyncOwner(stack, owner)
-        ScheduleSyncSavedData.get(level).putScheduleTag(owner, syncId, scheduleTag.copy())
+        stack.set(AllDataComponents.TRAIN_SCHEDULE, normalized.copy())
+        ScheduleSyncSavedData.get(level).putScheduleTag(owner, syncId, normalized.copy())
 
         RunningTrainScheduleSync.applyToLinkedTrains(
             level,
             owner,
             syncId,
-            scheduleTag.copy()
+            normalized.copy()
         )
 
         return SaveResult.SAVED
@@ -154,14 +171,19 @@ object ScheduleSyncManager {
         val syncId = UUID.randomUUID()
         val store = ScheduleSyncSavedData.get(level)
 
-        store.putScheduleTag(owner, syncId, scheduleTag.copy())
+        val normalized = ScheduleTagSanitizer.forSyncStore(
+            level.registryAccess(),
+            scheduleTag,
+        )
+
+        store.putScheduleTag(owner, syncId, normalized.copy())
 
         val displayName = store.getDisplayName(owner, syncId) ?: "Schedule ${syncId.toString().substring(0, 8)}"
 
         SynchronizedScheduleItem.setSyncOwner(stack, owner)
         SynchronizedScheduleItem.setSyncName(stack, displayName)
         SynchronizedScheduleItem.setSyncId(stack, syncId)
-        stack.set(AllDataComponents.TRAIN_SCHEDULE, scheduleTag.copy())
+        stack.set(AllDataComponents.TRAIN_SCHEDULE, normalized.copy())
 
         return NewIdResult(syncId, NewIdStatus.CREATED)
     }

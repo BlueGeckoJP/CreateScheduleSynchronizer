@@ -20,7 +20,7 @@ class ScheduleSyncSavedData : SavedData() {
 
     private val schedulesByOwner: MutableMap<UUID, MutableMap<UUID, StoredSchedule>> = linkedMapOf()
 
-    private fun schedulesOf(owner: UUID) : MutableMap<UUID, StoredSchedule> =
+    private fun schedulesOf(owner: UUID): MutableMap<UUID, StoredSchedule> =
         schedulesByOwner.getOrPut(owner) { linkedMapOf() }
 
     private fun schedulesOfOrNull(owner: UUID): MutableMap<UUID, StoredSchedule>? =
@@ -84,7 +84,13 @@ class ScheduleSyncSavedData : SavedData() {
         return Schedule.fromTag(registries, stored.scheduleTag.copy())
     }
 
-    fun putSchedule(owner: UUID, id: UUID, schedule: Schedule, registries: HolderLookup.Provider, name: String? = null) {
+    fun putSchedule(
+        owner: UUID,
+        id: UUID,
+        schedule: Schedule,
+        registries: HolderLookup.Provider,
+        name: String? = null
+    ) {
         putScheduleTag(owner, id, schedule.write(registries), name)
     }
 

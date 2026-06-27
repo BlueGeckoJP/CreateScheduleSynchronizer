@@ -5,6 +5,7 @@ import com.simibubi.create.content.trains.GlobalRailwayManager;
 import com.simibubi.create.content.trains.entity.Train;
 import com.simibubi.create.content.trains.schedule.Schedule;
 import com.simibubi.create.content.trains.schedule.ScheduleRuntime;
+import me.bluegecko.createschedulesynchronizer.sync.ScheduleTagSanitizer;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -74,14 +75,11 @@ public final class RunningTrainScheduleSync {
             UUID syncId,
             CompoundTag scheduleTag
     ) {
-        Schedule schedule = Schedule.fromTag(registries, scheduleTag.copy());
-
-        if (schedule.entries.isEmpty()) {
-            schedule.savedProgress = 0;
-        } else {
-            schedule.savedProgress = Math.clamp(schedule.entries.size() - 1,
-                    0, runtime.currentEntry);
-        }
+        Schedule schedule = ScheduleTagSanitizer.forRuntimeUpdate(
+                registries,
+                scheduleTag,
+                runtime
+        );
 
         boolean auto = runtime.isAutoSchedule;
 
