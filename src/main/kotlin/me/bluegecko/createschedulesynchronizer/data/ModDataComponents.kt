@@ -26,4 +26,8 @@ object ModDataComponents {
         REGISTRY.registerComponentType("sync_name") { builder: DataComponentType.Builder<String> ->
             builder.persistent(Codec.STRING).networkSynchronized(ByteBufCodecs.STRING_UTF8)
         }
+
+    val SYNC_OWNER = REGISTRY.registerComponentType("sync_owner") { builder ->
+        builder.persistent(UUIDUtil.STRING_CODEC).networkSynchronized(UUID_STREAM_CODEC)
+    }
 }

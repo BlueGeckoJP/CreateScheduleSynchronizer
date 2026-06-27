@@ -16,7 +16,7 @@ public final class ScheduleSyncNetworkHelper {
         PacketDistributor.sendToPlayer(
                 player,
                 new ScheduleSyncIdsPayload(
-                        ScheduleSyncSavedData.get(player.serverLevel()).namedEntries()
+                        ScheduleSyncSavedData.get(player.serverLevel()).namedEntries(player.getUUID())
                 )
         );
 

@@ -34,6 +34,20 @@ public final class ScheduleCompatibility {
         }
     }
 
+    public static UUID getSyncOwner(ItemStack stack) {
+        if (!isSynchronizedSchedule(stack)) {
+            return null;
+        }
+
+        return SynchronizedScheduleItem.getSyncOwner(stack);
+    }
+
+    public static void setSyncOwner(ItemStack stack, UUID owner) {
+        if (owner != null && isSynchronizedSchedule(stack)) {
+            SynchronizedScheduleItem.setSyncOwner(stack, owner);
+        }
+    }
+
     public static void syncFromStoreIfPossible(ItemStack stack, ServerLevel level) {
         if (isSynchronizedSchedule(stack)) {
             ScheduleSyncManager.syncItemFromStore(stack, level);

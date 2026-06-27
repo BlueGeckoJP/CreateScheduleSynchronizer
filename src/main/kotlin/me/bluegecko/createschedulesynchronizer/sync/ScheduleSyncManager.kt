@@ -24,11 +24,13 @@ object ScheduleSyncManager {
      *   do nothing.
      */
     @JvmStatic
-    fun syncItemFromStoreOrInitialize(stack: ItemStack, level: ServerLevel): Boolean {
+    fun syncItemFromStoreOrInitialize(stack: ItemStack, level: ServerLevel, owner: UUID): Boolean {
         val syncId = SynchronizedScheduleItem.getSyncId(stack) ?: return false
         val store = ScheduleSyncSavedData.get(level)
 
-        val storedSchedule = store.getScheduleTag(syncId)
+        SynchronizedScheduleItem.setSyncOwner(stack, owner)
+
+        val storedSchedule = store.getScheduleTag(owner, syncId)
         if (storedSchedule != null) {
             stack.set(AllDataComponents.TRAIN_SCHEDULE, storedSchedule.copy())
             return true
@@ -36,7 +38,7 @@ object ScheduleSyncManager {
 
         val localSchedule = stack.get(AllDataComponents.TRAIN_SCHEDULE)
         if (localSchedule != null) {
-            store.putScheduleTag(syncId, localSchedule.copy())
+            store.putScheduleTag(owner, syncId, localSchedule.copy())
             return true
         }
 
@@ -45,8 +47,10 @@ object ScheduleSyncManager {
 
     @JvmStatic
     fun syncItemFromStore(stack: ItemStack, level: ServerLevel): Boolean {
+        val owner = SynchronizedScheduleItem.getSyncOwner(stack) ?: return false
         val syncId = SynchronizedScheduleItem.getSyncId(stack) ?: return false
-        val storeSchedule = ScheduleSyncSavedData.get(level).getScheduleTag(syncId) ?: return false
+
+        val storeSchedule = ScheduleSyncSavedData.get(level).getScheduleTag(owner, syncId) ?: return false
 
         stack.set(AllDataComponents.TRAIN_SCHEDULE, storeSchedule.copy())
         return true
@@ -57,6 +61,7 @@ object ScheduleSyncManager {
         return saveItemScheduleTagToStore(
             stack = player.mainHandItem,
             level = player.serverLevel(),
+            owner = player.uuid,
             scheduleTag = scheduleTag
         )
     }
@@ -65,6 +70,7 @@ object ScheduleSyncManager {
     fun saveItemScheduleTagToStore(
         stack: ItemStack,
         level: ServerLevel,
+        owner: UUID,
         scheduleTag: CompoundTag
     ): SaveResult {
         if (stack.item !is SynchronizedScheduleItem) {
@@ -73,11 +79,13 @@ object ScheduleSyncManager {
 
         val syncId = SynchronizedScheduleItem.getSyncId(stack) ?: return SaveResult.NOT_LINKED
 
+        SynchronizedScheduleItem.setSyncOwner(stack, owner)
         stack.set(AllDataComponents.TRAIN_SCHEDULE, scheduleTag.copy())
-        ScheduleSyncSavedData.get(level).putScheduleTag(syncId, scheduleTag.copy())
+        ScheduleSyncSavedData.get(level).putScheduleTag(owner, syncId, scheduleTag.copy())
 
         RunningTrainScheduleSync.applyToLinkedTrains(
             level,
+            owner,
             syncId,
             scheduleTag.copy()
         )
@@ -88,7 +96,8 @@ object ScheduleSyncManager {
     @JvmStatic
     fun saveItemToStore(
         stack: ItemStack,
-        level: ServerLevel
+        level: ServerLevel,
+        owner: UUID
     ): SaveResult {
         if (stack.item !is SynchronizedScheduleItem) {
             return SaveResult.NOT_SYNCHRONIZED_SCHEDULE
@@ -98,10 +107,12 @@ object ScheduleSyncManager {
 
         val scheduleTag = stack.get(AllDataComponents.TRAIN_SCHEDULE) ?: Schedule().write(level.registryAccess())
 
-        ScheduleSyncSavedData.get(level).putScheduleTag(syncId, scheduleTag.copy())
+        SynchronizedScheduleItem.setSyncOwner(stack, owner)
+        ScheduleSyncSavedData.get(level).putScheduleTag(owner, syncId, scheduleTag.copy())
 
         RunningTrainScheduleSync.applyToLinkedTrains(
             level,
+            owner,
             syncId,
             scheduleTag.copy()
         )
@@ -124,6 +135,7 @@ object ScheduleSyncManager {
         return createNewSyncIdForItem(
             stack = player.mainHandItem,
             level = player.serverLevel(),
+            owner = player.uuid,
             scheduleTag = scheduleTag
         )
     }
@@ -132,6 +144,7 @@ object ScheduleSyncManager {
     fun createNewSyncIdForItem(
         stack: ItemStack,
         level: ServerLevel,
+        owner: UUID,
         scheduleTag: CompoundTag
     ): NewIdResult {
         if (stack.item !is SynchronizedScheduleItem) {
@@ -139,13 +152,13 @@ object ScheduleSyncManager {
         }
 
         val syncId = UUID.randomUUID()
-
         val store = ScheduleSyncSavedData.get(level)
 
-        store.putScheduleTag(syncId, scheduleTag.copy())
+        store.putScheduleTag(owner, syncId, scheduleTag.copy())
 
-        val displayName = store.getDisplayName(syncId) ?: "Schedule ${syncId.toString().substring(0, 8)}"
+        val displayName = store.getDisplayName(owner, syncId) ?: "Schedule ${syncId.toString().substring(0, 8)}"
 
+        SynchronizedScheduleItem.setSyncOwner(stack, owner)
         SynchronizedScheduleItem.setSyncName(stack, displayName)
         SynchronizedScheduleItem.setSyncId(stack, syncId)
         stack.set(AllDataComponents.TRAIN_SCHEDULE, scheduleTag.copy())
@@ -171,6 +184,7 @@ object ScheduleSyncManager {
         return linkItemToScheduleId(
             stack = player.mainHandItem,
             level = player.serverLevel(),
+            owner = player.uuid,
             syncId = syncId,
         )
     }
@@ -179,6 +193,7 @@ object ScheduleSyncManager {
     fun linkItemToScheduleId(
         stack: ItemStack,
         level: ServerLevel,
+        owner: UUID,
         syncId: UUID,
     ): LinkResult {
         if (stack.item !is SynchronizedScheduleItem) {
@@ -187,10 +202,11 @@ object ScheduleSyncManager {
 
         val store = ScheduleSyncSavedData.get(level)
 
-        val storedSchedule = store.getScheduleTag(syncId) ?: return LinkResult.NOT_FOUND
+        val storedSchedule = store.getScheduleTag(owner, syncId) ?: return LinkResult.NOT_FOUND
 
-        val displayName = store.getDisplayName(syncId) ?: "Schedule ${syncId.toString().substring(0, 8)}"
+        val displayName = store.getDisplayName(owner, syncId) ?: "Schedule ${syncId.toString().substring(0, 8)}"
 
+        SynchronizedScheduleItem.setSyncOwner(stack, owner)
         SynchronizedScheduleItem.setSyncId(stack, syncId)
         SynchronizedScheduleItem.setSyncName(stack, displayName)
         stack.set(AllDataComponents.TRAIN_SCHEDULE, storedSchedule.copy())
@@ -212,6 +228,7 @@ object ScheduleSyncManager {
         return linkItemToScheduleIdAndGetTag(
             stack = player.mainHandItem,
             level = player.serverLevel(),
+            owner = player.uuid,
             syncId = syncId,
         )
     }
@@ -220,6 +237,7 @@ object ScheduleSyncManager {
     fun linkItemToScheduleIdAndGetTag(
         stack: ItemStack,
         level: ServerLevel,
+        owner: UUID,
         syncId: UUID,
     ): LinkWithTagResult {
         if (stack.item !is SynchronizedScheduleItem) {
@@ -228,12 +246,13 @@ object ScheduleSyncManager {
 
         val store = ScheduleSyncSavedData.get(level)
 
-        val storedSchedule = store.getScheduleTag(syncId) ?: return LinkWithTagResult(
+        val storedSchedule = store.getScheduleTag(owner, syncId) ?: return LinkWithTagResult(
             LinkResult.NOT_FOUND, null
         )
 
-        val displayName = store.getDisplayName(syncId) ?: "Schedule ${syncId.toString().substring(0, 8)}"
+        val displayName = store.getDisplayName(owner, syncId) ?: "Schedule ${syncId.toString().substring(0, 8)}"
 
+        SynchronizedScheduleItem.setSyncOwner(stack, owner)
         SynchronizedScheduleItem.setSyncId(stack, syncId)
         SynchronizedScheduleItem.setSyncName(stack, displayName)
         stack.set(AllDataComponents.TRAIN_SCHEDULE, storedSchedule.copy())

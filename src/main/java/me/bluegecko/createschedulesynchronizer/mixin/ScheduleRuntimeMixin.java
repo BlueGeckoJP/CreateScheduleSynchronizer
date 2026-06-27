@@ -35,10 +35,16 @@ public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
     private static final String CSS_PENDING_SCHEDULE_KEY = "CreateScheduleSynchronizerPendingSchedule";
 
     @Unique
+    private static final String CSS_SYNC_OWNER_KEY = "CreateScheduleSynchronizerSyncOwner";
+
+    @Unique
     private boolean css$synchronizedSchedule;
 
     @Unique
     private UUID css$syncId;
+
+    @Unique
+    private UUID css$syncOwner;
 
     @Unique
     private CompoundTag css$pendingScheduleUpdate;
@@ -46,12 +52,14 @@ public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
     @Override
     public void css$setScheduleSource(ItemStack source) {
         css$synchronizedSchedule = ScheduleCompatibility.isSynchronizedSchedule(source);
+        css$syncOwner = css$synchronizedSchedule ? ScheduleCompatibility.getSyncOwner(source) : null;
         css$syncId = css$synchronizedSchedule ? ScheduleCompatibility.getSyncId(source) : null;
     }
 
     @Override
-    public void css$setSynchronizedScheduleSource(UUID syncId) {
-        css$synchronizedSchedule = syncId != null;
+    public void css$setSynchronizedScheduleSource(UUID owner, UUID syncId) {
+        css$synchronizedSchedule = owner != null && syncId != null;
+        css$syncOwner = owner;
         css$syncId = syncId;
     }
 
@@ -63,6 +71,11 @@ public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
     @Override
     public UUID css$getScheduleSyncId() {
         return css$syncId;
+    }
+
+    @Override
+    public UUID css$getScheduleSyncOwner() {
+        return css$syncOwner;
     }
 
     @Override
@@ -90,7 +103,8 @@ public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
     private ItemStack css$createReturnedScheduleStack(ItemEntry<?> originalScheduleEntry) {
         ItemStack returnedStack = css$synchronizedSchedule ? ModItems.INSTANCE.getSYNCHRONIZED_SCHEDULE().toStack() : originalScheduleEntry.asStack();
 
-        if (css$synchronizedSchedule && css$syncId != null) {
+        if (css$synchronizedSchedule && css$syncOwner != null && css$syncId != null) {
+            ScheduleCompatibility.setSyncOwner(returnedStack, css$syncOwner);
             ScheduleCompatibility.setSyncId(returnedStack, css$syncId);
         }
 
@@ -110,7 +124,7 @@ public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
             return;
         }
 
-        if (!css$synchronizedSchedule || css$syncId == null) {
+        if (!css$synchronizedSchedule || css$syncOwner == null || css$syncId == null) {
             css$pendingScheduleUpdate = null;
             return;
         }
@@ -128,6 +142,7 @@ public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
                 serverLevel.registryAccess(),
                 runtime,
                 this,
+                css$syncOwner,
                 css$syncId,
                 pending
         );
@@ -149,6 +164,10 @@ public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
         if (css$synchronizedSchedule) {
             tag.putBoolean(CSS_SOURCE_KEY, true);
 
+            if (css$syncOwner != null) {
+                tag.putUUID(CSS_SYNC_OWNER_KEY, css$syncOwner);
+            }
+
             if (css$syncId != null) {
                 tag.putUUID(CSS_SYNC_ID_KEY, css$syncId);
             }
@@ -169,6 +188,7 @@ public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
             CallbackInfo callback
     ) {
         css$synchronizedSchedule = tag.getBoolean(CSS_SOURCE_KEY);
+        css$syncOwner = css$synchronizedSchedule && tag.hasUUID(CSS_SYNC_OWNER_KEY) ? tag.getUUID(CSS_SYNC_OWNER_KEY) : null;
         css$syncId = css$synchronizedSchedule && tag.hasUUID(CSS_SYNC_ID_KEY) ? tag.getUUID(CSS_SYNC_ID_KEY) : null;
 
         css$pendingScheduleUpdate = tag.contains(CSS_PENDING_SCHEDULE_KEY, Tag.TAG_COMPOUND) ? tag.getCompound(CSS_PENDING_SCHEDULE_KEY).copy() : null;
@@ -180,6 +200,7 @@ public abstract class ScheduleRuntimeMixin implements ScheduleSourceTracker {
     @Inject(method = "discardSchedule", at = @At("RETURN"))
     private void css$clearSource(CallbackInfo callback) {
         css$synchronizedSchedule = false;
+        css$syncOwner = null;
         css$syncId = null;
         css$pendingScheduleUpdate = null;
     }

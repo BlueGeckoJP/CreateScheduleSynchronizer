@@ -22,7 +22,8 @@ class SynchronizedScheduleItem(properties: Properties) : ScheduleItem(properties
         if (level is ServerLevel) {
             ScheduleSyncManager.syncItemFromStoreOrInitialize(
                 player.getItemInHand(usedHand),
-                level
+                level,
+                player.uuid,
             )
         }
 
@@ -31,11 +32,13 @@ class SynchronizedScheduleItem(properties: Properties) : ScheduleItem(properties
 
     override fun useOn(context: UseOnContext): InteractionResult {
         val level = context.level
+        val player = context.player
 
-        if (level is ServerLevel) {
+        if (level is ServerLevel && player != null) {
             ScheduleSyncManager.syncItemFromStoreOrInitialize(
                 context.itemInHand,
-                level
+                level,
+                player.uuid
             )
         }
 
@@ -51,7 +54,7 @@ class SynchronizedScheduleItem(properties: Properties) : ScheduleItem(properties
         val level = player.level()
 
         if (level is ServerLevel) {
-            ScheduleSyncManager.syncItemFromStoreOrInitialize(stack, level)
+            ScheduleSyncManager.syncItemFromStoreOrInitialize(stack, level, player.uuid)
         }
 
         return super.handScheduleTo(stack, player, interactionTarget, usedHand)
@@ -101,6 +104,7 @@ class SynchronizedScheduleItem(properties: Properties) : ScheduleItem(properties
         fun clearSyncId(stack: ItemStack) {
             stack.remove(ModDataComponents.SYNC_ID.get())
             stack.remove(ModDataComponents.SYNC_NAME.get())
+            stack.remove(ModDataComponents.SYNC_OWNER.get())
         }
 
         @JvmStatic
@@ -121,6 +125,21 @@ class SynchronizedScheduleItem(properties: Properties) : ScheduleItem(properties
         @JvmStatic
         fun clearSyncName(stack: ItemStack) {
             stack.remove(ModDataComponents.SYNC_NAME.get())
+        }
+
+        @JvmStatic
+        fun getSyncOwner(stack: ItemStack): UUID? {
+            return stack.get(ModDataComponents.SYNC_OWNER.get())
+        }
+
+        @JvmStatic
+        fun setSyncOwner(stack: ItemStack, owner: UUID) {
+            stack.set(ModDataComponents.SYNC_OWNER.get(), owner)
+        }
+
+        @JvmStatic
+        fun clearSyncOwner(stack: ItemStack) {
+            stack.remove(ModDataComponents.SYNC_OWNER.get())
         }
     }
 }

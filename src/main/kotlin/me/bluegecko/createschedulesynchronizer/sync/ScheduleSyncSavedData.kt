@@ -18,15 +18,22 @@ class ScheduleSyncSavedData : SavedData() {
         var scheduleTag: CompoundTag,
     )
 
-    private val schedules: MutableMap<UUID, StoredSchedule> = linkedMapOf()
+    private val schedulesByOwner: MutableMap<UUID, MutableMap<UUID, StoredSchedule>> = linkedMapOf()
 
-    fun ids(): List<UUID> = schedules.keys.toList()
+    private fun schedulesOf(owner: UUID) : MutableMap<UUID, StoredSchedule> =
+        schedulesByOwner.getOrPut(owner) { linkedMapOf() }
 
-    fun contains(id: UUID): Boolean = id in schedules.keys
+    private fun schedulesOfOrNull(owner: UUID): MutableMap<UUID, StoredSchedule>? =
+        schedulesByOwner[owner]
 
-    fun getScheduleTag(id: UUID): CompoundTag? = schedules[id]?.scheduleTag?.copy()
+    fun ids(owner: UUID): List<UUID> = schedulesOfOrNull(owner)?.keys?.toList() ?: emptyList()
 
-    fun putScheduleTag(id: UUID, scheduleTag: CompoundTag, name: String? = null) {
+    fun contains(owner: UUID, id: UUID): Boolean = schedulesOfOrNull(owner)?.containsKey(id) == true
+
+    fun getScheduleTag(owner: UUID, id: UUID): CompoundTag? = schedulesOfOrNull(owner)?.get(id)?.scheduleTag?.copy()
+
+    fun putScheduleTag(owner: UUID, id: UUID, scheduleTag: CompoundTag, name: String? = null) {
+        val schedules = schedulesOf(owner)
         val existing = schedules[id]
 
         val displayName = sanitizeDisplayName(
@@ -42,56 +49,67 @@ class ScheduleSyncSavedData : SavedData() {
         setDirty()
     }
 
-    fun getDisplayName(id: UUID): String? = schedules[id]?.name
+    fun getDisplayName(owner: UUID, id: UUID): String? = schedulesOfOrNull(owner)?.get(id)?.name
 
-    fun setDisplayName(id: UUID, name: String) {
-        val stored = schedules[id] ?: return
+    fun setDisplayName(owner: UUID, id: UUID, name: String) {
+        val stored = schedulesOfOrNull(owner)?.get(id) ?: return
         stored.name = sanitizeDisplayName(name, id)
         setDirty()
     }
 
-    fun namedEntries(): List<ScheduleSyncEntry> {
-        return schedules.map { (id, stored) ->
+    fun namedEntries(owner: UUID): List<ScheduleSyncEntry> {
+        return schedulesOfOrNull(owner)?.map { (id, stored) ->
             ScheduleSyncEntry(id, stored.name)
-        }
+        } ?: emptyList()
     }
 
-    fun removeSchedule(id: UUID): Boolean {
-        val removed = schedules.remove(id) != null
+    fun removeSchedule(owner: UUID, id: UUID): Boolean {
+        val removed = schedulesOfOrNull(owner)?.remove(id) != null
         if (removed) {
             setDirty()
         }
         return removed
     }
 
-    fun clear() {
-        if (schedules.isNotEmpty()) {
+    fun clear(owner: UUID) {
+        val schedules = schedulesOfOrNull(owner)
+        if (!schedules.isNullOrEmpty()) {
             schedules.clear()
             setDirty()
         }
     }
 
-    fun getSchedule(id: UUID, registries: HolderLookup.Provider): Schedule? {
-        val stored = schedules[id] ?: return null
+    fun getSchedule(owner: UUID, id: UUID, registries: HolderLookup.Provider): Schedule? {
+        val stored = schedulesOfOrNull(owner)?.get(id) ?: return null
         return Schedule.fromTag(registries, stored.scheduleTag.copy())
     }
 
-    fun putSchedule(id: UUID, schedule: Schedule, registries: HolderLookup.Provider, name: String? = null) {
-        putScheduleTag(id, schedule.write(registries), name)
+    fun putSchedule(owner: UUID, id: UUID, schedule: Schedule, registries: HolderLookup.Provider, name: String? = null) {
+        putScheduleTag(owner, id, schedule.write(registries), name)
     }
 
     override fun save(tag: CompoundTag, registries: HolderLookup.Provider): CompoundTag {
-        val list = ListTag()
+        val owners = ListTag()
 
-        for ((id, stored) in schedules) {
-            val entry = CompoundTag()
-            entry.putUUID("Id", id)
-            entry.putString("Name", stored.name)
-            entry.put("Schedule", stored.scheduleTag.copy())
-            list.add(entry)
+        for ((owner, schedules) in schedulesByOwner) {
+            val ownerEntry = CompoundTag()
+            ownerEntry.putUUID("Owner", owner)
+
+            val schedulesList = ListTag()
+
+            for ((id, stored) in schedules) {
+                val entry = CompoundTag()
+                entry.putUUID("Id", id)
+                entry.putString("Name", stored.name)
+                entry.put("Schedule", stored.scheduleTag.copy())
+                schedulesList.add(entry)
+            }
+
+            ownerEntry.put("Schedules", schedulesList)
+            owners.add(ownerEntry)
         }
 
-        tag.put("Schedules", list)
+        tag.put("Owners", owners)
         return tag
     }
 
@@ -114,31 +132,45 @@ class ScheduleSyncSavedData : SavedData() {
 
         private fun load(tag: CompoundTag, registries: HolderLookup.Provider): ScheduleSyncSavedData {
             val data = ScheduleSyncSavedData()
-            val list = tag.getList("Schedules", Tag.TAG_COMPOUND.toInt())
 
-            for (i in list.indices) {
-                val entry = list.getCompound(i)
+            val owners = tag.getList("Owners", Tag.TAG_COMPOUND.toInt())
 
-                if (!entry.hasUUID("Id")) {
+            for (ownerIndex in owners.indices) {
+                val ownerEntry = owners.getCompound(ownerIndex)
+
+                if (!ownerEntry.hasUUID("Owner")) {
                     continue
                 }
 
-                if (!entry.contains("Schedule", Tag.TAG_COMPOUND.toInt())) {
-                    continue
+                val owner = ownerEntry.getUUID("Owner")
+                val schedules = data.schedulesOf(owner)
+
+                val list = ownerEntry.getList("Schedules", Tag.TAG_COMPOUND.toInt())
+
+                for (i in list.indices) {
+                    val entry = list.getCompound(i)
+
+                    if (!entry.hasUUID("Id")) {
+                        continue
+                    }
+
+                    if (!entry.contains("Schedule", Tag.TAG_COMPOUND.toInt())) {
+                        continue
+                    }
+
+                    val id = entry.getUUID("Id")
+
+                    val rawName = if (entry.contains("Name", Tag.TAG_STRING.toInt())) {
+                        entry.getString("Name")
+                    } else {
+                        defaultDisplayName(id)
+                    }
+
+                    schedules[id] = StoredSchedule(
+                        name = sanitizeDisplayName(rawName, id),
+                        scheduleTag = entry.getCompound("Schedule").copy()
+                    )
                 }
-
-                val id = entry.getUUID("Id")
-
-                val rawName = if (entry.contains("Name", Tag.TAG_STRING.toInt())) {
-                    entry.getString("Name")
-                } else {
-                    defaultDisplayName(id)
-                }
-
-                data.schedules[id] = StoredSchedule(
-                    name = sanitizeDisplayName(rawName, id),
-                    scheduleTag = entry.getCompound("Schedule").copy(),
-                )
             }
 
             return data

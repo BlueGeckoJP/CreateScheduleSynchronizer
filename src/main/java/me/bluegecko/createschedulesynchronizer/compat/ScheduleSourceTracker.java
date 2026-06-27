@@ -8,9 +8,11 @@ import java.util.UUID;
 public interface ScheduleSourceTracker {
     void css$setScheduleSource(ItemStack source);
 
-    void css$setSynchronizedScheduleSource(UUID syncId);
+    void css$setSynchronizedScheduleSource(UUID owner, UUID syncId);
 
     boolean css$isSynchronizedSchedule();
+
+    UUID css$getScheduleSyncOwner();
 
     UUID css$getScheduleSyncId();
 

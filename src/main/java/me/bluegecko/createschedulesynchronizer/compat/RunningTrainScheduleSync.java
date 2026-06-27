@@ -17,6 +17,7 @@ public final class RunningTrainScheduleSync {
 
     public static ApplyResult applyToLinkedTrains(
             ServerLevel level,
+            UUID owner,
             UUID syncId,
             CompoundTag scheduleTag
     ) {
@@ -29,6 +30,10 @@ public final class RunningTrainScheduleSync {
             ScheduleRuntime runtime = train.runtime;
 
             if (!(runtime instanceof ScheduleSourceTracker tracker)) {
+                continue;
+            }
+
+            if (!owner.equals(tracker.css$getScheduleSyncOwner())) {
                 continue;
             }
 
@@ -46,6 +51,7 @@ public final class RunningTrainScheduleSync {
                     level.registryAccess(),
                     runtime,
                     tracker,
+                    owner,
                     syncId,
                     scheduleTag
             );
@@ -64,6 +70,7 @@ public final class RunningTrainScheduleSync {
             HolderLookup.Provider registries,
             ScheduleRuntime runtime,
             ScheduleSourceTracker tracker,
+            UUID owner,
             UUID syncId,
             CompoundTag scheduleTag
     ) {
@@ -79,7 +86,7 @@ public final class RunningTrainScheduleSync {
         boolean auto = runtime.isAutoSchedule;
 
         runtime.setSchedule(schedule, auto);
-        tracker.css$setSynchronizedScheduleSource(syncId);
+        tracker.css$setSynchronizedScheduleSource(owner, syncId);
     }
 
     public record ApplyResult(int applied, int queued) {
