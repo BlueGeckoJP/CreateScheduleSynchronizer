@@ -32,7 +32,15 @@ object ScheduleSyncManager {
 
         val storedSchedule = store.getScheduleTag(owner, syncId)
         if (storedSchedule != null) {
-            stack.set(AllDataComponents.TRAIN_SCHEDULE, storedSchedule.copy())
+            val currentItemSchedule = stack.get(AllDataComponents.TRAIN_SCHEDULE)
+
+            val itemView = ScheduleTagSanitizer.forItemView(
+                level.registryAccess(),
+                storedSchedule,
+                currentItemSchedule
+            )
+
+            stack.set(AllDataComponents.TRAIN_SCHEDULE, itemView)
             return true
         }
 
@@ -44,7 +52,7 @@ object ScheduleSyncManager {
             )
 
             store.putScheduleTag(owner, syncId, normalized.copy())
-            stack.set(AllDataComponents.TRAIN_SCHEDULE, normalized.copy())
+            stack.set(AllDataComponents.TRAIN_SCHEDULE, localSchedule.copy())
 
             return true
         }
@@ -59,7 +67,14 @@ object ScheduleSyncManager {
 
         val storeSchedule = ScheduleSyncSavedData.get(level).getScheduleTag(owner, syncId) ?: return false
 
-        stack.set(AllDataComponents.TRAIN_SCHEDULE, storeSchedule.copy())
+        val currentItemSchedule = stack.get(AllDataComponents.TRAIN_SCHEDULE)
+        val itemView = ScheduleTagSanitizer.forItemView(
+            level.registryAccess(),
+            storeSchedule,
+            currentItemSchedule
+        )
+
+        stack.set(AllDataComponents.TRAIN_SCHEDULE, itemView)
         return true
     }
 
@@ -92,7 +107,7 @@ object ScheduleSyncManager {
         )
 
         SynchronizedScheduleItem.setSyncOwner(stack, owner)
-        stack.set(AllDataComponents.TRAIN_SCHEDULE, normalized.copy())
+        stack.set(AllDataComponents.TRAIN_SCHEDULE, scheduleTag.copy())
         ScheduleSyncSavedData.get(level).putScheduleTag(owner, syncId, normalized.copy())
 
         RunningTrainScheduleSync.applyToLinkedTrains(
@@ -124,7 +139,7 @@ object ScheduleSyncManager {
         )
 
         SynchronizedScheduleItem.setSyncOwner(stack, owner)
-        stack.set(AllDataComponents.TRAIN_SCHEDULE, normalized.copy())
+        stack.set(AllDataComponents.TRAIN_SCHEDULE, scheduleTag.copy())
         ScheduleSyncSavedData.get(level).putScheduleTag(owner, syncId, normalized.copy())
 
         RunningTrainScheduleSync.applyToLinkedTrains(
@@ -183,7 +198,7 @@ object ScheduleSyncManager {
         SynchronizedScheduleItem.setSyncOwner(stack, owner)
         SynchronizedScheduleItem.setSyncName(stack, displayName)
         SynchronizedScheduleItem.setSyncId(stack, syncId)
-        stack.set(AllDataComponents.TRAIN_SCHEDULE, normalized.copy())
+        stack.set(AllDataComponents.TRAIN_SCHEDULE, scheduleTag.copy())
 
         return NewIdResult(syncId, NewIdStatus.CREATED)
     }
@@ -231,7 +246,14 @@ object ScheduleSyncManager {
         SynchronizedScheduleItem.setSyncOwner(stack, owner)
         SynchronizedScheduleItem.setSyncId(stack, syncId)
         SynchronizedScheduleItem.setSyncName(stack, displayName)
-        stack.set(AllDataComponents.TRAIN_SCHEDULE, storedSchedule.copy())
+
+        val currentItemSchedule = stack.get(AllDataComponents.TRAIN_SCHEDULE)
+        val itemView = ScheduleTagSanitizer.forItemView(
+            level.registryAccess(),
+            storedSchedule,
+            currentItemSchedule,
+        )
+        stack.set(AllDataComponents.TRAIN_SCHEDULE, itemView)
 
         return LinkResult.LINKED
     }
@@ -277,9 +299,16 @@ object ScheduleSyncManager {
         SynchronizedScheduleItem.setSyncOwner(stack, owner)
         SynchronizedScheduleItem.setSyncId(stack, syncId)
         SynchronizedScheduleItem.setSyncName(stack, displayName)
-        stack.set(AllDataComponents.TRAIN_SCHEDULE, storedSchedule.copy())
 
-        return LinkWithTagResult(LinkResult.LINKED, storedSchedule.copy())
+        val currentItemSchedule = stack.get(AllDataComponents.TRAIN_SCHEDULE)
+        val itemView = ScheduleTagSanitizer.forItemView(
+            level.registryAccess(),
+            storedSchedule,
+            currentItemSchedule,
+        )
+        stack.set(AllDataComponents.TRAIN_SCHEDULE, itemView)
+
+        return LinkWithTagResult(LinkResult.LINKED, itemView.copy())
     }
 
     data class LinkWithTagResult(

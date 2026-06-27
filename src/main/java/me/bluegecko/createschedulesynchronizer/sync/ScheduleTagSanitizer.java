@@ -40,4 +40,30 @@ public final class ScheduleTagSanitizer {
 
         return schedule;
     }
+
+    public static CompoundTag forItemView(
+            HolderLookup.Provider registries,
+            CompoundTag canonicalTag,
+            CompoundTag currentItemTag
+    ) {
+        Schedule canonical = Schedule.fromTag(registries, canonicalTag.copy());
+
+        if (currentItemTag != null) {
+            Schedule current = Schedule.fromTag(registries, currentItemTag.copy());
+
+            if (canonical.entries.isEmpty()) {
+                canonical.savedProgress = 0;
+            } else {
+                canonical.savedProgress = Math.clamp(
+                        current.savedProgress,
+                        0,
+                        canonical.entries.size() - 1
+                );
+            }
+        } else {
+            canonical.savedProgress = 0;
+        }
+
+        return canonical.write(registries);
+    }
 }
