@@ -12,7 +12,9 @@
   ],
   "client": [
     "ScheduleScreenMixin",
-    "ScreenCharTypedMixin"
+    "ScreenCharTypedMixin",
+    "MinecraftMixin",
+    "WindowMixin"
   ],
   "injectors": {
     "defaultRequire": 1

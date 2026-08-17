@@ -4,6 +4,7 @@ import com.simibubi.create.content.trains.schedule.Schedule;
 import com.simibubi.create.content.trains.schedule.ScheduleEntry;
 import com.simibubi.create.content.trains.schedule.ScheduleMenu;
 import com.simibubi.create.content.trains.schedule.ScheduleScreen;
+import com.simibubi.create.foundation.gui.menu.AbstractSimiContainerScreen;
 import me.bluegecko.createschedulesynchronizer.client.ScheduleSyncClientState;
 import me.bluegecko.createschedulesynchronizer.client.ScheduleSyncEntry;
 import me.bluegecko.createschedulesynchronizer.compat.RenameOverlayHandler;
@@ -17,6 +18,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,7 +33,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Mixin(value = ScheduleScreen.class, remap = false)
-public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
+public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<ScheduleMenu> implements RenameOverlayHandler {
+    protected ScheduleScreenMixin(
+            ScheduleMenu menu,
+            Inventory inventory,
+            Component title
+    ) {
+        super(menu, inventory, title);
+    }
+
     @Unique
     private static final int CSS_PANEL_WIDTH = 92;
 
@@ -45,6 +55,12 @@ public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
     private static final int CSS_BUTTON_HEIGHT = 18;
 
     @Unique
+    private static final int CSS_PANEL_GAP = 8;
+
+    @Unique
+    private static final int CSS_SCREEN_MARGIN = 4;
+
+    @Unique
     private int css$idScrollOffset;
 
     @Unique
@@ -55,6 +71,7 @@ public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
 
     @Unique
     private EditBox css$renameEditBox;
+
     @Shadow
     private Schedule schedule;
 
@@ -90,12 +107,12 @@ public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
 
     @Unique
     private static int css$panelX(AbstractContainerScreen<?> screen) {
-        return screen.getGuiLeft() + screen.getXSize() + 8;
+        return screen.getGuiLeft() + screen.getXSize() + CSS_PANEL_GAP;
     }
 
     @Unique
     private static int css$panelY(AbstractContainerScreen<?> screen) {
-        return screen.getGuiTop() + 12;
+        return screen.getGuiTop();
     }
 
     @Unique
@@ -328,6 +345,31 @@ public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
 
     @Shadow
     public abstract int renderScheduleEntry(GuiGraphics graphics, ScheduleEntry entry, int yOffset, int mouseX, int mouseY, float partialTicks);
+
+    @Inject(method = "init", at = @At(
+            value = "INVOKE",
+            target = "Lcom/simibubi/create/foundation/gui/menu/AbstractSimiContainerScreen;init()V",
+            shift = At.Shift.AFTER
+    ))
+    private void css$shiftScheduleScreenLeftToFitPanel(
+            CallbackInfo callback
+    ) {
+        if (!css$isSyncScheduleScreen()) {
+            return;
+        }
+
+        AbstractContainerScreen<?> screen =
+                (AbstractContainerScreen<?>) (Object) this;
+
+        int panelRight = leftPos + screen.getXSize() + CSS_PANEL_GAP + CSS_PANEL_WIDTH;
+
+        int availableRight = screen.width - CSS_SCREEN_MARGIN;
+        int overflow = panelRight - availableRight;
+
+        if (overflow > 0) {
+            leftPos = Math.max(CSS_SCREEN_MARGIN, leftPos - overflow);
+        }
+    }
 
     @Inject(method = "init", at = @At("TAIL"))
     private void css$requestSyncIds(CallbackInfo callback) {
