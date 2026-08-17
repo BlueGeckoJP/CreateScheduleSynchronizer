@@ -38,7 +38,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     @Unique
     private static final int CSS_PANEL_WIDTH = 92;
     @Unique
-    private static final int CSS_PANEL_HEIGHT = 172;
+    private static final int CSS_PANEL_HEIGHT = 166;
     @Unique
     private static final int CSS_BUTTON_WIDTH = 72;
     @Unique
@@ -129,7 +129,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
 
     @Unique
     private static int css$saveButtonY(AbstractContainerScreen<?> screen) {
-        return css$panelY(screen) + 38;
+        return css$panelY(screen) + 32;
     }
 
     @Unique
@@ -154,7 +154,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
 
     @Unique
     private static int css$newButtonY(AbstractContainerScreen<?> screen) {
-        return css$panelY(screen) + 62;
+        return css$panelY(screen) + 56;
     }
 
     @Unique
@@ -164,7 +164,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
 
     @Unique
     private static int css$idListY(AbstractContainerScreen<?> screen) {
-        return css$panelY(screen) + 124;
+        return css$panelY(screen) + 118;
     }
 
     @Unique
@@ -184,7 +184,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
 
     @Unique
     private static int css$unlinkButtonY(AbstractContainerScreen<?> screen) {
-        return css$panelY(screen) + 86;
+        return css$panelY(screen) + 80;
     }
 
     @Unique
@@ -492,41 +492,73 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 0xFF606060
         );
 
-        graphics.drawString(
-                minecraft.font,
-                Component.literal("Sync"),
-                panelX + 6,
-                panelY + 6,
-                0xFFE0E0E0,
-                false
-        );
-
         ScheduleSyncEntry currentEntry = ScheduleSyncClientState.getCurrentEntry();
+
+        Component hoveredTooltip = null;
 
         String currentScheduleText = currentEntry == null ? "none" : currentEntry.name();
         int currentTextColor = currentEntry == null ? 0xFF808080 : 0xFF90D090;
         int currentTextMaxWidth = CSS_PANEL_WIDTH - 12;
+        String displayedCurrentText = css$ellipsize(
+                minecraft.font,
+                currentScheduleText,
+                currentTextMaxWidth
+        );
+
+        int currentTextX = panelX + 6;
+        int currentTextY = panelY + 16;
+        int displayedCurrentTextWidth = minecraft.font.width(displayedCurrentText);
+
+        boolean currentTextHovered =
+                currentEntry != null && css$isInside(
+                        mouseX,
+                        mouseY,
+                        currentTextX,
+                        currentTextY,
+                        displayedCurrentTextWidth,
+                        minecraft.font.lineHeight
+                );
+
+        if (currentTextHovered) {
+            graphics.fill(
+                    currentTextX - 2,
+                    currentTextY - 1,
+                    currentTextX + displayedCurrentTextWidth + 2,
+                    currentTextY + minecraft.font.lineHeight,
+                    0x553E6A9E
+            );
+
+            hoveredTooltip = Component.literal(currentEntry.name());
+        }
 
         graphics.drawString(
                 minecraft.font,
                 Component.literal("Current:"),
                 panelX + 6,
-                panelY + 18,
+                panelY + 6,
                 currentTextColor,
                 false
         );
         graphics.drawString(
                 minecraft.font,
-                Component.literal(css$ellipsize(
-                        minecraft.font,
-                        currentScheduleText,
-                        currentTextMaxWidth
-                )),
-                panelX + 6,
-                panelY + 28,
-                currentTextColor,
+                Component.literal(displayedCurrentText),
+                currentTextX,
+                currentTextY,
+                currentTextHovered ? 0xFFFFFFFF : currentTextColor,
                 false
         );
+
+        if (currentEntry != null) {
+            int underlineY = currentTextY + minecraft.font.lineHeight;
+
+            graphics.fill(
+                    currentTextX,
+                    underlineY,
+                    currentTextX + displayedCurrentTextWidth,
+                    underlineY + 1,
+                    currentTextHovered ? 0xFFFFFFFF : 0x8090D090
+            );
+        }
 
         int buttonX = css$saveButtonX(screen);
         int buttonY = css$saveButtonY(screen);
@@ -640,7 +672,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 minecraft.font,
                 Component.literal("IDs"),
                 panelX + 6,
-                panelY + 112,
+                panelY + 106,
                 0xFFE0E0E0,
                 false
         );
@@ -665,6 +697,10 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                     css$idRowWidth(),
                     css$idRowHeight()
             );
+
+            if (idHovered) {
+                hoveredTooltip = Component.literal(entry.name());
+            }
 
             if (idHovered || selected) {
                 graphics.fill(
@@ -702,6 +738,15 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                     panelY + 112,
                     0xFF808080,
                     false
+            );
+        }
+
+        if (hoveredTooltip != null && !css$renameOverlayOpen) {
+            graphics.renderTooltip(
+                    minecraft.font,
+                    hoveredTooltip,
+                    mouseX,
+                    mouseY
             );
         }
 
