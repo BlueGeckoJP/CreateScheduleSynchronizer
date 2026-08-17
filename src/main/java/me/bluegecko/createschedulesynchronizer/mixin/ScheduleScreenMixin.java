@@ -34,6 +34,29 @@ import java.util.List;
 
 @Mixin(value = ScheduleScreen.class, remap = false)
 public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<ScheduleMenu> implements RenameOverlayHandler {
+    @Unique
+    private static final int CSS_PANEL_WIDTH = 92;
+    @Unique
+    private static final int CSS_PANEL_HEIGHT = 172;
+    @Unique
+    private static final int CSS_BUTTON_WIDTH = 72;
+    @Unique
+    private static final int CSS_BUTTON_HEIGHT = 18;
+    @Unique
+    private static final int CSS_PANEL_GAP = 8;
+    @Unique
+    private static final int CSS_SCREEN_MARGIN = 4;
+    @Unique
+    private int css$idScrollOffset;
+    @Unique
+    private boolean css$renameOverlayOpen;
+    @Unique
+    private ScheduleSyncEntry css$renameTarget;
+    @Unique
+    private EditBox css$renameEditBox;
+    @Shadow
+    private Schedule schedule;
+
     protected ScheduleScreenMixin(
             ScheduleMenu menu,
             Inventory inventory,
@@ -41,39 +64,6 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     ) {
         super(menu, inventory, title);
     }
-
-    @Unique
-    private static final int CSS_PANEL_WIDTH = 92;
-
-    @Unique
-    private static final int CSS_PANEL_HEIGHT = 172;
-
-    @Unique
-    private static final int CSS_BUTTON_WIDTH = 72;
-
-    @Unique
-    private static final int CSS_BUTTON_HEIGHT = 18;
-
-    @Unique
-    private static final int CSS_PANEL_GAP = 8;
-
-    @Unique
-    private static final int CSS_SCREEN_MARGIN = 4;
-
-    @Unique
-    private int css$idScrollOffset;
-
-    @Unique
-    private boolean css$renameOverlayOpen;
-
-    @Unique
-    private ScheduleSyncEntry css$renameTarget;
-
-    @Unique
-    private EditBox css$renameEditBox;
-
-    @Shadow
-    private Schedule schedule;
 
     @Unique
     private static void css$drawOverlayButton(
@@ -189,7 +179,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
 
         int boxWidth = 220;
         int boxHeight = 20;
-        Screen screen = (Screen) (Object) this;
+        Screen screen = this;
         int x = (screen.width - boxWidth) / 2;
         int y = (screen.height - boxHeight) / 2;
 
@@ -245,7 +235,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
             int mouseY
     ) {
         Minecraft minecraft = Minecraft.getInstance();
-        Screen screen = (Screen) (Object) this;
+        Screen screen = this;
 
         graphics.pose().pushPose();
         graphics.pose().translate(0, 0, 500);
@@ -304,7 +294,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
 
     @Unique
     private boolean css$isSyncScheduleScreen() {
-        Object menu = ((AbstractContainerScreen<?>) (Object) this).getMenu();
+        Object menu = ((AbstractContainerScreen<?>) this).getMenu();
 
         if (!(menu instanceof ScheduleMenu scheduleMenu)) {
             return false;
@@ -323,7 +313,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         }
 
         AbstractContainerScreen<?> screen =
-                (AbstractContainerScreen<?>) (Object) this;
+                this;
 
         List<Rect2i> extraAreas =
                 new ArrayList<>(callback.getReturnValue());
@@ -359,7 +349,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         }
 
         AbstractContainerScreen<?> screen =
-                (AbstractContainerScreen<?>) (Object) this;
+                this;
 
         int panelRight = leftPos + screen.getXSize() + CSS_PANEL_GAP + CSS_PANEL_WIDTH;
 
@@ -415,7 +405,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
             return;
         }
 
-        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
+        AbstractContainerScreen<?> screen = this;
 
         int listX = css$idListX(screen);
         int listY = css$idListY(screen);
@@ -463,7 +453,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
             return;
         }
 
-        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
+        AbstractContainerScreen<?> screen = this;
         Minecraft minecraft = Minecraft.getInstance();
 
         int panelX = css$panelX(screen);
@@ -698,7 +688,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         }
 
         if (css$renameOverlayOpen) {
-            Screen screen = (Screen) (Object) this;
+            Screen screen = this;
 
             int panelWidth = 260;
             int panelHeight = 94;
@@ -734,7 +724,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
             return;
         }
 
-        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
+        AbstractContainerScreen<?> screen = this;
 
         CompoundTag scheduleTag = schedule.write(
                 Minecraft.getInstance().player.registryAccess()

@@ -19,7 +19,8 @@ public final class ScheduleGuiScaleState {
 
     private static boolean synchronizedScheduleOpen;
 
-    private ScheduleGuiScaleState() {}
+    private ScheduleGuiScaleState() {
+    }
 
     public static boolean isSynchronizedScheduleOpen() {
         return synchronizedScheduleOpen;

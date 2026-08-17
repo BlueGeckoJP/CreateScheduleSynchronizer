@@ -83,16 +83,6 @@ public final class CreateScheduleSynchronizerJeiPlugin implements IModPlugin {
         );
     }
 
-    private record ScheduleGuiProperties(
-            Class<? extends Screen> screenClass,
-            int guiLeft,
-            int guiTop,
-            int guiXSize,
-            int guiYSize,
-            int screenWidth,
-            int screenHeight
-    ) implements IGuiProperties {}
-
     private static IGuiProperties createScheduleGuiProperties(
             ScheduleScreen screen
     ) {
@@ -154,5 +144,16 @@ public final class CreateScheduleSynchronizerJeiPlugin implements IModPlugin {
                 ScheduleScreen.class,
                 CreateScheduleSynchronizerJeiPlugin::createScheduleGuiProperties
         );
+    }
+
+    private record ScheduleGuiProperties(
+            Class<? extends Screen> screenClass,
+            int guiLeft,
+            int guiTop,
+            int guiXSize,
+            int guiYSize,
+            int screenWidth,
+            int screenHeight
+    ) implements IGuiProperties {
     }
 }

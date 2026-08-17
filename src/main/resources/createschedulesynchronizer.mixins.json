@@ -11,9 +11,9 @@
     "StationBlockEntityMixin"
   ],
   "client": [
+    "MinecraftMixin",
     "ScheduleScreenMixin",
     "ScreenCharTypedMixin",
-    "MinecraftMixin",
     "WindowMixin"
   ],
   "injectors": {
