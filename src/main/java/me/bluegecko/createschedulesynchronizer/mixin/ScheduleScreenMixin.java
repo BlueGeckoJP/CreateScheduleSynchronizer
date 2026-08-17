@@ -48,6 +48,108 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     @Unique
     private static final int CSS_SCREEN_MARGIN = 4;
     @Unique
+    private static final int CSS_BUTTON_X_OFFSET = 10;
+    @Unique
+    private static final int CSS_SAVE_BUTTON_Y_OFFSET = 32;
+    @Unique
+    private static final int CSS_NEW_BUTTON_Y_OFFSET = 56;
+    @Unique
+    private static final int CSS_UNLINK_BUTTON_Y_OFFSET = 80;
+    @Unique
+    private static final int CSS_ID_LIST_X_OFFSET = 8;
+    @Unique
+    private static final int CSS_ID_LIST_Y_OFFSET = 118;
+    @Unique
+    private static final int CSS_ID_ROW_HEIGHT = 10;
+    @Unique
+    private static final int CSS_VISIBLE_ID_ROWS = 4;
+    @Unique
+    private static final int CSS_RENAME_EDIT_BOX_WIDTH = 220;
+    @Unique
+    private static final int CSS_RENAME_EDIT_BOX_HEIGHT = 20;
+    @Unique
+    private static final int CSS_RENAME_MAX_LENGTH = 32;
+    @Unique
+    private static final int CSS_BUTTON_TEXT_Y_OFFSET = 5;
+    @Unique
+    private static final int CSS_RENAME_OVERLAY_Z = 500;
+    @Unique
+    private static final int CSS_RENAME_PANEL_WIDTH = 260;
+    @Unique
+    private static final int CSS_RENAME_PANEL_HEIGHT = 94;
+    @Unique
+    private static final int CSS_RENAME_TITLE_X_OFFSET = 12;
+    @Unique
+    private static final int CSS_RENAME_TITLE_Y_OFFSET = 10;
+    @Unique
+    private static final int CSS_RENAME_BUTTON_X_OFFSET = 52;
+    @Unique
+    private static final int CSS_CANCEL_BUTTON_X_OFFSET = 138;
+    @Unique
+    private static final int CSS_RENAME_BUTTON_Y_OFFSET = 62;
+    @Unique
+    private static final int CSS_PRIMARY_MOUSE_BUTTON = 0;
+    @Unique
+    private static final int CSS_SECONDARY_MOUSE_BUTTON = 1;
+    @Unique
+    private static final int CSS_ESCAPE_KEY = 256;
+    @Unique
+    private static final int CSS_ENTER_KEY = 257;
+    @Unique
+    private static final int CSS_NUMPAD_ENTER_KEY = 335;
+    @Unique
+    private static final int CSS_COLOR_WHITE = 0xFFFFFFFF;
+    @Unique
+    private static final int CSS_COLOR_OVERLAY_DIM = 0xAA000000;
+    @Unique
+    private static final int CSS_COLOR_RENAME_PANEL = 0xFF202020;
+    @Unique
+    private static final int CSS_COLOR_PANEL_BACKGROUND = 0xAA101010;
+    @Unique
+    private static final int CSS_COLOR_PANEL_BORDER = 0xFF606060;
+    @Unique
+    private static final int CSS_COLOR_BUTTON = 0xFF3E4A5C;
+    @Unique
+    private static final int CSS_COLOR_BUTTON_HOVERED = 0xFF5A6F8F;
+    @Unique
+    private static final int CSS_COLOR_NEW_BUTTON = 0xFF4A5C3E;
+    @Unique
+    private static final int CSS_COLOR_NEW_BUTTON_HOVERED = 0xFF6F8F5A;
+    @Unique
+    private static final int CSS_COLOR_UNLINK_BUTTON = 0xFF5C3E3E;
+    @Unique
+    private static final int CSS_COLOR_UNLINK_BUTTON_HOVERED = 0xFF8F5A5A;
+    @Unique
+    private static final int CSS_COLOR_DISABLED_TEXT = 0xFF808080;
+    @Unique
+    private static final int CSS_COLOR_CURRENT_TEXT = 0xFF90D090;
+    @Unique
+    private static final int CSS_COLOR_CURRENT_UNDERLINE = 0x8090D090;
+    @Unique
+    private static final int CSS_COLOR_HOVERED_ROW = 0x553E6A9E;
+    @Unique
+    private static final int CSS_COLOR_SELECTED_ROW = 0x664A8F4A;
+    @Unique
+    private static final int CSS_COLOR_SELECTED_TEXT = 0xFF90FF90;
+    @Unique
+    private static final int CSS_COLOR_ROW_TEXT = 0xFFB0B0B0;
+    @Unique
+    private static final int CSS_COLOR_SECTION_TEXT = 0xFFE0E0E0;
+    @Unique
+    private static final int CSS_TEXT_X_OFFSET = 6;
+    @Unique
+    private static final int CSS_CURRENT_TEXT_Y_OFFSET = 16;
+    @Unique
+    private static final int CSS_LIST_TITLE_Y_OFFSET = 106;
+    @Unique
+    private static final int CSS_EMPTY_LIST_X_INSET = 44;
+    @Unique
+    private static final int CSS_EMPTY_LIST_Y_OFFSET = 112;
+    @Unique
+    private static final int CSS_ROW_HORIZONTAL_PADDING = 2;
+    @Unique
+    private static final int CSS_ROW_VERTICAL_PADDING = 1;
+    @Unique
     private int css$idScrollOffset;
     @Unique
     private boolean css$renameOverlayOpen;
@@ -98,17 +200,17 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 y,
                 x + width,
                 y + height,
-                hovered ? 0xFF5A6F8F : 0xFF3E4A5C
+                hovered ? CSS_COLOR_BUTTON_HOVERED : CSS_COLOR_BUTTON
         );
 
-        graphics.renderOutline(x, y, width, height, 0xFFFFFFFF);
+        graphics.renderOutline(x, y, width, height, CSS_COLOR_WHITE);
 
         graphics.drawCenteredString(
                 minecraft.font,
                 Component.literal(label),
                 x + width / 2,
-                y + 5,
-                0xFFFFFFFF
+                y + CSS_BUTTON_TEXT_Y_OFFSET,
+                CSS_COLOR_WHITE
         );
     }
 
@@ -124,12 +226,12 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
 
     @Unique
     private static int css$saveButtonX(AbstractContainerScreen<?> screen) {
-        return css$panelX(screen) + 10;
+        return css$panelX(screen) + CSS_BUTTON_X_OFFSET;
     }
 
     @Unique
     private static int css$saveButtonY(AbstractContainerScreen<?> screen) {
-        return css$panelY(screen) + 32;
+        return css$panelY(screen) + CSS_SAVE_BUTTON_Y_OFFSET;
     }
 
     @Unique
@@ -149,42 +251,42 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
 
     @Unique
     private static int css$newButtonX(AbstractContainerScreen<?> screen) {
-        return css$panelX(screen) + 10;
+        return css$panelX(screen) + CSS_BUTTON_X_OFFSET;
     }
 
     @Unique
     private static int css$newButtonY(AbstractContainerScreen<?> screen) {
-        return css$panelY(screen) + 56;
+        return css$panelY(screen) + CSS_NEW_BUTTON_Y_OFFSET;
     }
 
     @Unique
     private static int css$idListX(AbstractContainerScreen<?> screen) {
-        return css$panelX(screen) + 8;
+        return css$panelX(screen) + CSS_ID_LIST_X_OFFSET;
     }
 
     @Unique
     private static int css$idListY(AbstractContainerScreen<?> screen) {
-        return css$panelY(screen) + 118;
+        return css$panelY(screen) + CSS_ID_LIST_Y_OFFSET;
     }
 
     @Unique
     private static int css$idRowWidth() {
-        return CSS_PANEL_WIDTH - 16;
+        return CSS_PANEL_WIDTH - CSS_ID_LIST_X_OFFSET * 2;
     }
 
     @Unique
     private static int css$idRowHeight() {
-        return 10;
+        return CSS_ID_ROW_HEIGHT;
     }
 
     @Unique
     private static int css$unlinkButtonX(AbstractContainerScreen<?> screen) {
-        return css$panelX(screen) + 10;
+        return css$panelX(screen) + CSS_BUTTON_X_OFFSET;
     }
 
     @Unique
     private static int css$unlinkButtonY(AbstractContainerScreen<?> screen) {
-        return css$panelY(screen) + 80;
+        return css$panelY(screen) + CSS_UNLINK_BUTTON_Y_OFFSET;
     }
 
     @Unique
@@ -194,8 +296,8 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         css$renameOverlayOpen = true;
         css$renameTarget = target;
 
-        int boxWidth = 220;
-        int boxHeight = 20;
+        int boxWidth = CSS_RENAME_EDIT_BOX_WIDTH;
+        int boxHeight = CSS_RENAME_EDIT_BOX_HEIGHT;
         Screen screen = this;
         int x = (screen.width - boxWidth) / 2;
         int y = (screen.height - boxHeight) / 2;
@@ -209,7 +311,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 Component.literal("Schedule name")
         );
 
-        css$renameEditBox.setMaxLength(32);
+        css$renameEditBox.setMaxLength(CSS_RENAME_MAX_LENGTH);
         css$renameEditBox.setValue(target.name());
         css$renameEditBox.setFocused(true);
     }
@@ -240,7 +342,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
 
     @Unique
     private void css$clampIdScrollOffset() {
-        int maxRows = 4;
+        int maxRows = CSS_VISIBLE_ID_ROWS;
         int maxOffset = Math.max(0, ScheduleSyncClientState.getEntries().size() - maxRows);
         css$idScrollOffset = Math.clamp(css$idScrollOffset, 0, maxOffset);
     }
@@ -255,24 +357,24 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         Screen screen = this;
 
         graphics.pose().pushPose();
-        graphics.pose().translate(0, 0, 500);
+        graphics.pose().translate(0, 0, CSS_RENAME_OVERLAY_Z);
 
-        graphics.fill(0, 0, screen.width, screen.height, 0xAA000000);
+        graphics.fill(0, 0, screen.width, screen.height, CSS_COLOR_OVERLAY_DIM);
 
-        int panelWidth = 260;
-        int panelHeight = 94;
+        int panelWidth = CSS_RENAME_PANEL_WIDTH;
+        int panelHeight = CSS_RENAME_PANEL_HEIGHT;
         int panelX = (screen.width - panelWidth) / 2;
         int panelY = (screen.height - panelHeight) / 2;
 
-        graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xFF202020);
-        graphics.renderOutline(panelX, panelY, panelWidth, panelHeight, 0xFFFFFFFF);
+        graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, CSS_COLOR_RENAME_PANEL);
+        graphics.renderOutline(panelX, panelY, panelWidth, panelHeight, CSS_COLOR_WHITE);
 
         graphics.drawString(
                 minecraft.font,
                 Component.literal("Rename schedule"),
-                panelX + 12,
-                panelY + 10,
-                0xFFFFFFFF,
+                panelX + CSS_RENAME_TITLE_X_OFFSET,
+                panelY + CSS_RENAME_TITLE_Y_OFFSET,
+                CSS_COLOR_WHITE,
                 false
         );
 
@@ -280,19 +382,19 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
             css$renameEditBox.renderWidget(graphics, mouseX, mouseY, 0);
         }
 
-        int renameX = panelX + 52;
-        int cancelX = panelX + 138;
-        int buttonY = panelY + 62;
+        int renameX = panelX + CSS_RENAME_BUTTON_X_OFFSET;
+        int cancelX = panelX + CSS_CANCEL_BUTTON_X_OFFSET;
+        int buttonY = panelY + CSS_RENAME_BUTTON_Y_OFFSET;
 
         css$drawOverlayButton(
                 graphics,
                 minecraft,
                 renameX,
                 buttonY,
-                72,
-                18,
+                CSS_BUTTON_WIDTH,
+                CSS_BUTTON_HEIGHT,
                 "Rename",
-                css$isInside(mouseX, mouseY, renameX, buttonY, 72, 18)
+                css$isInside(mouseX, mouseY, renameX, buttonY, CSS_BUTTON_WIDTH, CSS_BUTTON_HEIGHT)
         );
 
         css$drawOverlayButton(
@@ -300,10 +402,10 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 minecraft,
                 cancelX,
                 buttonY,
-                72,
-                18,
+                CSS_BUTTON_WIDTH,
+                CSS_BUTTON_HEIGHT,
                 "Cancel",
-                css$isInside(mouseX, mouseY, cancelX, buttonY, 72, 18)
+                css$isInside(mouseX, mouseY, cancelX, buttonY, CSS_BUTTON_WIDTH, CSS_BUTTON_HEIGHT)
         );
 
         graphics.pose().popPose();
@@ -426,7 +528,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
 
         int listX = css$idListX(screen);
         int listY = css$idListY(screen);
-        int maxRows = 4;
+        int maxRows = CSS_VISIBLE_ID_ROWS;
         int listHeight = maxRows * css$idRowHeight();
 
         if (!css$isInside(
@@ -481,7 +583,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 panelY,
                 panelX + CSS_PANEL_WIDTH,
                 panelY + CSS_PANEL_HEIGHT,
-                0xAA101010
+                CSS_COLOR_PANEL_BACKGROUND
         );
 
         graphics.renderOutline(
@@ -489,7 +591,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 panelY,
                 CSS_PANEL_WIDTH,
                 CSS_PANEL_HEIGHT,
-                0xFF606060
+                CSS_COLOR_PANEL_BORDER
         );
 
         ScheduleSyncEntry currentEntry = ScheduleSyncClientState.getCurrentEntry();
@@ -497,16 +599,16 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         Component hoveredTooltip = null;
 
         String currentScheduleText = currentEntry == null ? "none" : currentEntry.name();
-        int currentTextColor = currentEntry == null ? 0xFF808080 : 0xFF90D090;
-        int currentTextMaxWidth = CSS_PANEL_WIDTH - 12;
+        int currentTextColor = currentEntry == null ? CSS_COLOR_DISABLED_TEXT : CSS_COLOR_CURRENT_TEXT;
+        int currentTextMaxWidth = CSS_PANEL_WIDTH - CSS_TEXT_X_OFFSET * 2;
         String displayedCurrentText = css$ellipsize(
                 minecraft.font,
                 currentScheduleText,
                 currentTextMaxWidth
         );
 
-        int currentTextX = panelX + 6;
-        int currentTextY = panelY + 16;
+        int currentTextX = panelX + CSS_TEXT_X_OFFSET;
+        int currentTextY = panelY + CSS_CURRENT_TEXT_Y_OFFSET;
         int displayedCurrentTextWidth = minecraft.font.width(displayedCurrentText);
 
         boolean currentTextHovered =
@@ -521,11 +623,11 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
 
         if (currentTextHovered) {
             graphics.fill(
-                    currentTextX - 2,
-                    currentTextY - 1,
-                    currentTextX + displayedCurrentTextWidth + 2,
+                    currentTextX - CSS_ROW_HORIZONTAL_PADDING,
+                    currentTextY - CSS_ROW_VERTICAL_PADDING,
+                    currentTextX + displayedCurrentTextWidth + CSS_ROW_HORIZONTAL_PADDING,
                     currentTextY + minecraft.font.lineHeight,
-                    0x553E6A9E
+                    CSS_COLOR_HOVERED_ROW
             );
 
             hoveredTooltip = Component.literal(currentEntry.name());
@@ -534,8 +636,8 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         graphics.drawString(
                 minecraft.font,
                 Component.literal("Current:"),
-                panelX + 6,
-                panelY + 6,
+                panelX + CSS_TEXT_X_OFFSET,
+                panelY + CSS_TEXT_X_OFFSET,
                 currentTextColor,
                 false
         );
@@ -544,7 +646,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 Component.literal(displayedCurrentText),
                 currentTextX,
                 currentTextY,
-                currentTextHovered ? 0xFFFFFFFF : currentTextColor,
+                currentTextHovered ? CSS_COLOR_WHITE : currentTextColor,
                 false
         );
 
@@ -556,7 +658,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                     underlineY,
                     currentTextX + displayedCurrentTextWidth,
                     underlineY + 1,
-                    currentTextHovered ? 0xFFFFFFFF : 0x8090D090
+                    currentTextHovered ? CSS_COLOR_WHITE : CSS_COLOR_CURRENT_UNDERLINE
             );
         }
 
@@ -576,7 +678,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 buttonY,
                 buttonX + CSS_BUTTON_WIDTH,
                 buttonY + CSS_BUTTON_HEIGHT,
-                hovered ? 0xFF5A6F8F : 0xFF3E4A5C
+                hovered ? CSS_COLOR_BUTTON_HOVERED : CSS_COLOR_BUTTON
         );
 
         graphics.renderOutline(
@@ -584,15 +686,15 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 buttonY,
                 CSS_BUTTON_WIDTH,
                 CSS_BUTTON_HEIGHT,
-                0xFFFFFFFF
+                CSS_COLOR_WHITE
         );
 
         graphics.drawCenteredString(
                 minecraft.font,
                 Component.literal("Save"),
                 buttonX + CSS_BUTTON_WIDTH / 2,
-                buttonY + 5,
-                0xFFFFFFFF
+                buttonY + CSS_BUTTON_TEXT_Y_OFFSET,
+                CSS_COLOR_WHITE
         );
 
         int newButtonX = css$newButtonX(screen);
@@ -611,7 +713,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 newButtonY,
                 newButtonX + CSS_BUTTON_WIDTH,
                 newButtonY + CSS_BUTTON_HEIGHT,
-                newHovered ? 0xFF6F8F5A : 0xFF4A5C3E
+                newHovered ? CSS_COLOR_NEW_BUTTON_HOVERED : CSS_COLOR_NEW_BUTTON
         );
 
         graphics.renderOutline(
@@ -619,15 +721,15 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 newButtonY,
                 CSS_BUTTON_WIDTH,
                 CSS_BUTTON_HEIGHT,
-                0xFFFFFFFF
+                CSS_COLOR_WHITE
         );
 
         graphics.drawCenteredString(
                 minecraft.font,
                 Component.literal("New ID"),
                 newButtonX + CSS_BUTTON_WIDTH / 2,
-                newButtonY + 5,
-                0xFFFFFFFF
+                newButtonY + CSS_BUTTON_TEXT_Y_OFFSET,
+                CSS_COLOR_WHITE
         );
 
         int unlinkButtonX = css$unlinkButtonX(screen);
@@ -646,7 +748,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 unlinkButtonY,
                 unlinkButtonX + CSS_BUTTON_WIDTH,
                 unlinkButtonY + CSS_BUTTON_HEIGHT,
-                unlinkHovered ? 0xFF8F5A5A : 0xFF5C3E3E
+                unlinkHovered ? CSS_COLOR_UNLINK_BUTTON_HOVERED : CSS_COLOR_UNLINK_BUTTON
         );
 
         graphics.renderOutline(
@@ -654,15 +756,15 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 unlinkButtonY,
                 CSS_BUTTON_WIDTH,
                 CSS_BUTTON_HEIGHT,
-                0xFFFFFFFF
+                CSS_COLOR_WHITE
         );
 
         graphics.drawCenteredString(
                 minecraft.font,
                 Component.literal("Unlink"),
                 unlinkButtonX + CSS_BUTTON_WIDTH / 2,
-                unlinkButtonY + 5,
-                0xFFFFFFFF
+                unlinkButtonY + CSS_BUTTON_TEXT_Y_OFFSET,
+                CSS_COLOR_WHITE
         );
 
         css$clampIdScrollOffset();
@@ -671,16 +773,16 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         graphics.drawString(
                 minecraft.font,
                 Component.literal("IDs"),
-                panelX + 6,
-                panelY + 106,
-                0xFFE0E0E0,
+                panelX + CSS_TEXT_X_OFFSET,
+                panelY + CSS_LIST_TITLE_Y_OFFSET,
+                CSS_COLOR_SECTION_TEXT,
                 false
         );
 
         int listX = css$idListX(screen);
         int listY = css$idListY(screen);
 
-        int maxRows = 4;
+        int maxRows = CSS_VISIBLE_ID_ROWS;
         int visibleCount = Math.clamp(entries.size() - css$idScrollOffset, 0, maxRows);
 
         for (int row = 0; row < visibleCount; row++) {
@@ -704,11 +806,11 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
 
             if (idHovered || selected) {
                 graphics.fill(
-                        listX - 2,
-                        rowY - 1,
+                        listX - CSS_ROW_HORIZONTAL_PADDING,
+                        rowY - CSS_ROW_VERTICAL_PADDING,
                         listX + css$idRowWidth(),
                         rowY + css$idRowHeight(),
-                        selected ? 0x664A8F4A : 0x553E6A9E
+                        selected ? CSS_COLOR_SELECTED_ROW : CSS_COLOR_HOVERED_ROW
                 );
             }
 
@@ -723,7 +825,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                     Component.literal(text),
                     listX,
                     rowY,
-                    selected ? 0xFF90FF90 : idHovered ? 0xFFFFFFFF : 0xFFB0B0B0,
+                selected ? CSS_COLOR_SELECTED_TEXT : idHovered ? CSS_COLOR_WHITE : CSS_COLOR_ROW_TEXT,
                     false
             );
         }
@@ -734,9 +836,9 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
             graphics.drawString(
                     minecraft.font,
                     Component.literal(scrollText),
-                    panelX + CSS_PANEL_WIDTH - 44,
-                    panelY + 112,
-                    0xFF808080,
+                    panelX + CSS_PANEL_WIDTH - CSS_EMPTY_LIST_X_INSET,
+                    panelY + CSS_EMPTY_LIST_Y_OFFSET,
+                    CSS_COLOR_DISABLED_TEXT,
                     false
             );
         }
@@ -769,27 +871,31 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         if (css$renameOverlayOpen) {
             Screen screen = this;
 
-            int panelWidth = 260;
-            int panelHeight = 94;
+        int panelWidth = CSS_RENAME_PANEL_WIDTH;
+        int panelHeight = CSS_RENAME_PANEL_HEIGHT;
             int panelX = (screen.width - panelWidth) / 2;
             int panelY = (screen.height - panelHeight) / 2;
 
-            int renameX = panelX + 52;
-            int cancelX = panelX + 138;
-            int buttonY = panelY + 62;
+        int renameX = panelX + CSS_RENAME_BUTTON_X_OFFSET;
+        int cancelX = panelX + CSS_CANCEL_BUTTON_X_OFFSET;
+        int buttonY = panelY + CSS_RENAME_BUTTON_Y_OFFSET;
 
             if (css$renameEditBox != null && css$renameEditBox.mouseClicked(mouseX, mouseY, button)) {
                 callback.setReturnValue(true);
                 return;
             }
 
-            if (button == 0 && css$isInside(mouseX, mouseY, renameX, buttonY, 72, 18)) {
+        if (button == CSS_PRIMARY_MOUSE_BUTTON && css$isInside(
+                mouseX, mouseY, renameX, buttonY, CSS_BUTTON_WIDTH, CSS_BUTTON_HEIGHT
+        )) {
                 css$submitRenameOverlay();
                 callback.setReturnValue(true);
                 return;
             }
 
-            if (button == 0 && css$isInside(mouseX, mouseY, cancelX, buttonY, 72, 18)) {
+        if (button == CSS_PRIMARY_MOUSE_BUTTON && css$isInside(
+                mouseX, mouseY, cancelX, buttonY, CSS_BUTTON_WIDTH, CSS_BUTTON_HEIGHT
+        )) {
                 css$closeRenameOverlay();
                 callback.setReturnValue(true);
                 return;
@@ -812,7 +918,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         int saveButtonX = css$saveButtonX(screen);
         int saveButtonY = css$saveButtonY(screen);
 
-        if (button == 0 && css$isInside(
+        if (button == CSS_PRIMARY_MOUSE_BUTTON && css$isInside(
                 mouseX,
                 mouseY,
                 saveButtonX,
@@ -828,7 +934,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         int newButtonX = css$newButtonX(screen);
         int newButtonY = css$newButtonY(screen);
 
-        if (button == 0 && css$isInside(
+        if (button == CSS_PRIMARY_MOUSE_BUTTON && css$isInside(
                 mouseX,
                 mouseY,
                 newButtonX,
@@ -843,7 +949,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         int unlinkButtonX = css$unlinkButtonX(screen);
         int unlinkButtonY = css$unlinkButtonY(screen);
 
-        if (button == 0 && css$isInside(
+        if (button == CSS_PRIMARY_MOUSE_BUTTON && css$isInside(
                 mouseX,
                 mouseY,
                 unlinkButtonX,
@@ -861,7 +967,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         int listX = css$idListX(screen);
         int listY = css$idListY(screen);
 
-        int maxRows = 4;
+        int maxRows = CSS_VISIBLE_ID_ROWS;
         int visibleCount = Math.clamp(entries.size() - css$idScrollOffset, 0, maxRows);
 
         for (int row = 0; row < visibleCount; row++) {
@@ -881,13 +987,13 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
 
             ScheduleSyncEntry selectedEntry = entries.get(index);
 
-            if (button == 1) {
+            if (button == CSS_SECONDARY_MOUSE_BUTTON) {
                 css$openRenameOverlay(selectedEntry);
                 callback.setReturnValue(true);
                 return;
             }
 
-            if (button == 0) {
+            if (button == CSS_PRIMARY_MOUSE_BUTTON) {
                 PacketDistributor.sendToServer(new LinkScheduleSyncIdPayload(selectedEntry.id()));
                 callback.setReturnValue(true);
                 return;
@@ -911,13 +1017,13 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
             return;
         }
 
-        if (keyCode == 256) { // ESC
+        if (keyCode == CSS_ESCAPE_KEY) { // ESC
             css$closeRenameOverlay();
             callback.setReturnValue(true);
             return;
         }
 
-        if (keyCode == 257 || keyCode == 335) { // ENTER / NUMPAD_ENTER
+        if (keyCode == CSS_ENTER_KEY || keyCode == CSS_NUMPAD_ENTER_KEY) { // ENTER / NUMPAD_ENTER
             css$submitRenameOverlay();
             callback.setReturnValue(true);
             return;
