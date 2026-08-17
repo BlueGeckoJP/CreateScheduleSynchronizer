@@ -6,8 +6,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
-import java.awt.*;
-
 @Mixin(Window.class)
 public abstract class WindowMixin {
     // Change Minecraft's standard minimum GUI width of 320px to 414px only while the Synchronized Schedule is displayed
