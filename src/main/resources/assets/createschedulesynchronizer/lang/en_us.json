@@ -1,4 +1,6 @@
 {
   "item.createschedulesynchronizer.synchronized_schedule": "Synchronized Train Schedule",
-  "itemGroup.createschedulesynchronizer.main": "Synchronized Train Schedule"
+  "itemGroup.createschedulesynchronizer.main": "Synchronized Train Schedule",
+  "tooltip.createschedulesynchronizer.train_count": "In use: %s train(s)",
+  "tooltip.createschedulesynchronizer.train_count.loading": "In use: loading..."
 }

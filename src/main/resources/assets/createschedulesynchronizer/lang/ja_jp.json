@@ -1,4 +1,6 @@
 {
   "item.createschedulesynchronizer.synchronized_schedule": "同期式鉄道時刻表",
-  "itemGroup.createschedulesynchronizer.main": "同期式鉄道時刻表"
+  "itemGroup.createschedulesynchronizer.main": "同期式鉄道時刻表",
+  "tooltip.createschedulesynchronizer.train_count": "使用中: %s編成",
+  "tooltip.createschedulesynchronizer.train_count.loading": "使用中: 取得中..."
 }

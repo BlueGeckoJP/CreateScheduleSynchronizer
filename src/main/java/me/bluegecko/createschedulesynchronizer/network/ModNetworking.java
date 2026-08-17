@@ -64,5 +64,17 @@ public final class ModNetworking {
                 RenameScheduleSyncIdPayload.STREAM_CODEC,
                 RenameScheduleSyncIdPayload::handle
         );
+
+        registrar.playToServer(
+                RequestScheduleSyncTrainCountPayload.TYPE,
+                RequestScheduleSyncTrainCountPayload.STREAM_CODEC,
+                RequestScheduleSyncTrainCountPayload::handle
+        );
+
+        registrar.playToClient(
+                ScheduleSyncTrainCountPayload.TYPE,
+                ScheduleSyncTrainCountPayload.STREAM_CODEC,
+                ScheduleSyncTrainCountPayload::handle
+        );
     }
 }

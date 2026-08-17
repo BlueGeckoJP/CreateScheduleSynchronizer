@@ -32,6 +32,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Mixin(value = ScheduleScreen.class, remap = false)
 public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<ScheduleMenu> implements RenameOverlayHandler {
@@ -157,6 +158,8 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     private ScheduleSyncEntry css$renameTarget;
     @Unique
     private EditBox css$renameEditBox;
+    @Unique
+    private UUID css$requestedTrainCountId;
     @Shadow
     private Schedule schedule;
 
@@ -484,6 +487,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     private void css$requestSyncIds(CallbackInfo callback) {
         ScheduleSyncClientState.clear();
         css$idScrollOffset = 0;
+        css$requestedTrainCountId = null;
         css$closeRenameOverlay();
 
         if (!css$isSyncScheduleScreen()) {
@@ -596,7 +600,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
 
         ScheduleSyncEntry currentEntry = ScheduleSyncClientState.getCurrentEntry();
 
-        Component hoveredTooltip = null;
+        ScheduleSyncEntry hoveredEntry = null;
 
         String currentScheduleText = currentEntry == null ? "none" : currentEntry.name();
         int currentTextColor = currentEntry == null ? CSS_COLOR_DISABLED_TEXT : CSS_COLOR_CURRENT_TEXT;
@@ -630,7 +634,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                     CSS_COLOR_HOVERED_ROW
             );
 
-            hoveredTooltip = Component.literal(currentEntry.name());
+            hoveredEntry = currentEntry;
         }
 
         graphics.drawString(
@@ -801,7 +805,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
             );
 
             if (idHovered) {
-                hoveredTooltip = Component.literal(entry.name());
+                hoveredEntry = entry;
             }
 
             if (idHovered || selected) {
@@ -825,7 +829,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                     Component.literal(text),
                     listX,
                     rowY,
-                selected ? CSS_COLOR_SELECTED_TEXT : idHovered ? CSS_COLOR_WHITE : CSS_COLOR_ROW_TEXT,
+                    selected ? CSS_COLOR_SELECTED_TEXT : idHovered ? CSS_COLOR_WHITE : CSS_COLOR_ROW_TEXT,
                     false
             );
         }
@@ -843,13 +847,35 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
             );
         }
 
-        if (hoveredTooltip != null && !css$renameOverlayOpen) {
+        if (hoveredEntry != null && !css$renameOverlayOpen) {
+            UUID hoveredId = hoveredEntry.id();
+
+            if (!hoveredId.equals(css$requestedTrainCountId)) {
+                css$requestedTrainCountId = hoveredId;
+                ScheduleSyncClientState.clearTrainCount(hoveredId);
+
+                PacketDistributor.sendToServer(
+                        new RequestScheduleSyncTrainCountPayload(hoveredId)
+                );
+            }
+
+            Integer trainCount = ScheduleSyncClientState.getTrainCount(hoveredId);
+
+            Component trainCountText = trainCount == null ? Component.translatable(
+                    "tooltip.createschedulesynchronizer.train_count.loading"
+            ) : Component.translatable(
+                    "tooltip.createschedulesynchronizer.train_count",
+                    trainCount
+            );
+
             graphics.renderTooltip(
                     minecraft.font,
-                    hoveredTooltip,
+                    Component.literal(hoveredEntry.name()).append(Component.literal(" - ")).append(trainCountText),
                     mouseX,
                     mouseY
             );
+        } else {
+            css$requestedTrainCountId = null;
         }
 
         if (css$renameOverlayOpen) {
@@ -871,31 +897,31 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         if (css$renameOverlayOpen) {
             Screen screen = this;
 
-        int panelWidth = CSS_RENAME_PANEL_WIDTH;
-        int panelHeight = CSS_RENAME_PANEL_HEIGHT;
+            int panelWidth = CSS_RENAME_PANEL_WIDTH;
+            int panelHeight = CSS_RENAME_PANEL_HEIGHT;
             int panelX = (screen.width - panelWidth) / 2;
             int panelY = (screen.height - panelHeight) / 2;
 
-        int renameX = panelX + CSS_RENAME_BUTTON_X_OFFSET;
-        int cancelX = panelX + CSS_CANCEL_BUTTON_X_OFFSET;
-        int buttonY = panelY + CSS_RENAME_BUTTON_Y_OFFSET;
+            int renameX = panelX + CSS_RENAME_BUTTON_X_OFFSET;
+            int cancelX = panelX + CSS_CANCEL_BUTTON_X_OFFSET;
+            int buttonY = panelY + CSS_RENAME_BUTTON_Y_OFFSET;
 
             if (css$renameEditBox != null && css$renameEditBox.mouseClicked(mouseX, mouseY, button)) {
                 callback.setReturnValue(true);
                 return;
             }
 
-        if (button == CSS_PRIMARY_MOUSE_BUTTON && css$isInside(
-                mouseX, mouseY, renameX, buttonY, CSS_BUTTON_WIDTH, CSS_BUTTON_HEIGHT
-        )) {
+            if (button == CSS_PRIMARY_MOUSE_BUTTON && css$isInside(
+                    mouseX, mouseY, renameX, buttonY, CSS_BUTTON_WIDTH, CSS_BUTTON_HEIGHT
+            )) {
                 css$submitRenameOverlay();
                 callback.setReturnValue(true);
                 return;
             }
 
-        if (button == CSS_PRIMARY_MOUSE_BUTTON && css$isInside(
-                mouseX, mouseY, cancelX, buttonY, CSS_BUTTON_WIDTH, CSS_BUTTON_HEIGHT
-        )) {
+            if (button == CSS_PRIMARY_MOUSE_BUTTON && css$isInside(
+                    mouseX, mouseY, cancelX, buttonY, CSS_BUTTON_WIDTH, CSS_BUTTON_HEIGHT
+            )) {
                 css$closeRenameOverlay();
                 callback.setReturnValue(true);
                 return;

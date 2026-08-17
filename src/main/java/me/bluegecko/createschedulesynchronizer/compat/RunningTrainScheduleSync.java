@@ -67,6 +67,33 @@ public final class RunningTrainScheduleSync {
         return new ApplyResult(applied, queued);
     }
 
+    public static int countLinkedTrains(
+            ServerLevel level,
+            UUID owner,
+            UUID syncId
+    ) {
+        GlobalRailwayManager railways = Create.RAILWAYS.sided(level);
+        int count = 0;
+
+        for (Train train : railways.trains.values()) {
+            ScheduleRuntime runtime = train.runtime;
+
+            if (!(runtime instanceof ScheduleSourceTracker tracker)) {
+                continue;
+            }
+
+            if (!tracker.css$isSynchronizedSchedule()) {
+                continue;
+            }
+
+            if (owner.equals(tracker.css$getScheduleSyncOwner()) && syncId.equals(tracker.css$getScheduleSyncId())) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
     public static void applyNow(
             HolderLookup.Provider registries,
             ScheduleRuntime runtime,
