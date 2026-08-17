@@ -11,6 +11,7 @@ import me.bluegecko.createschedulesynchronizer.compat.RenameOverlayHandler;
 import me.bluegecko.createschedulesynchronizer.item.SynchronizedScheduleItem;
 import me.bluegecko.createschedulesynchronizer.network.*;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -63,6 +64,22 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
             Component title
     ) {
         super(menu, inventory, title);
+    }
+
+    @Unique
+    private static String css$ellipsize(Font font, String text, int maxWidth) {
+        if (font.width(text) <= maxWidth) {
+            return text;
+        }
+
+        String ellipsis = "..";
+        int textWidth = maxWidth - font.width(ellipsis);
+
+        if (textWidth <= 0) {
+            return font.plainSubstrByWidth(ellipsis, maxWidth);
+        }
+
+        return font.plainSubstrByWidth(text, textWidth) + ellipsis;
     }
 
     @Unique
@@ -486,15 +503,28 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
 
         ScheduleSyncEntry currentEntry = ScheduleSyncClientState.getCurrentEntry();
 
-        String currentText = currentEntry == null
-                ? "Current: none"
-                : "Current: " + currentEntry.name();
+        String currentScheduleText = currentEntry == null ? "none" : currentEntry.name();
+        int currentTextColor = currentEntry == null ? 0xFF808080 : 0xFF90D090;
+        int currentTextMaxWidth = CSS_PANEL_WIDTH - 12;
+
         graphics.drawString(
                 minecraft.font,
-                Component.literal(currentText),
+                Component.literal("Current:"),
                 panelX + 6,
                 panelY + 18,
-                currentEntry == null ? 0xFF808080 : 0xFF90D090,
+                currentTextColor,
+                false
+        );
+        graphics.drawString(
+                minecraft.font,
+                Component.literal(css$ellipsize(
+                        minecraft.font,
+                        currentScheduleText,
+                        currentTextMaxWidth
+                )),
+                panelX + 6,
+                panelY + 28,
+                currentTextColor,
                 false
         );
 
@@ -646,7 +676,11 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 );
             }
 
-            String text = entry.name();
+            String text = css$ellipsize(
+                    minecraft.font,
+                    entry.name(),
+                    css$idRowWidth()
+            );
 
             graphics.drawString(
                     minecraft.font,
