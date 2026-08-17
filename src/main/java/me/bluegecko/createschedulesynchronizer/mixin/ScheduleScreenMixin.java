@@ -14,6 +14,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -26,6 +27,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Mixin(value = ScheduleScreen.class, remap = false)
@@ -293,6 +295,32 @@ public abstract class ScheduleScreenMixin implements RenameOverlayHandler {
 
         ItemStack stack = scheduleMenu.contentHolder;
         return !stack.isEmpty() && stack.getItem() instanceof SynchronizedScheduleItem;
+    }
+
+    @Inject(method = "getExtraAreas", at = @At("RETURN"), cancellable = true)
+    private void css$addSyncPanelExtraArea(
+            CallbackInfoReturnable<List<Rect2i>> callback
+    ) {
+        if (!css$isSyncScheduleScreen()) {
+            return;
+        }
+
+        AbstractContainerScreen<?> screen =
+                (AbstractContainerScreen<?>) (Object) this;
+
+        List<Rect2i> extraAreas =
+                new ArrayList<>(callback.getReturnValue());
+
+        extraAreas.add(
+                new Rect2i(
+                        css$panelX(screen),
+                        css$panelY(screen),
+                        CSS_PANEL_WIDTH,
+                        CSS_PANEL_HEIGHT
+                )
+        );
+
+        callback.setReturnValue(extraAreas);
     }
 
     @Shadow
