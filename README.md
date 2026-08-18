@@ -2,6 +2,13 @@
 
 This mod is an addon for [Create](https://github.com/Creators-of-Create/Create).
 
+### License
+
+This project is licensed under the MIT License.
+See [LICENSE](LICENSE) for details.
+
+The files under `docs/screenshots/` are excluded from the MIT License.
+
 ## 概要 (これしかないけど)
 
 Create Modの列車時刻表を複数の列車で同期できるようにした、
