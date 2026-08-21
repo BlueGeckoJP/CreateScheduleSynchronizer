@@ -74,12 +74,12 @@ class SynchronizedScheduleItem(properties: Properties) : ScheduleItem(properties
             val syncName = getSyncName(stack) ?: "Linked Schedule"
 
             tooltip.add(
-                Component.literal("Sync: $syncName").withStyle(ChatFormatting.DARK_GRAY)
+                Component.literal("Sync: $syncName").withStyle(ChatFormatting.GRAY)
             )
 
             if (flag.isAdvanced) {
                 tooltip.add(
-                    Component.literal("Sync UUID: $syncId").withStyle(ChatFormatting.GRAY)
+                    Component.literal("Sync UUID: $syncId").withStyle(ChatFormatting.DARK_GRAY)
                 )
             }
         } else if (flag.isAdvanced) {
