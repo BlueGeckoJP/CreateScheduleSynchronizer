@@ -66,6 +66,12 @@ public final class ModNetworking {
         );
 
         registrar.playToServer(
+                RemoveScheduleSyncIdPayload.TYPE,
+                RemoveScheduleSyncIdPayload.STREAM_CODEC,
+                RemoveScheduleSyncIdPayload::handle
+        );
+
+        registrar.playToServer(
                 RequestScheduleSyncTrainCountPayload.TYPE,
                 RequestScheduleSyncTrainCountPayload.STREAM_CODEC,
                 RequestScheduleSyncTrainCountPayload::handle

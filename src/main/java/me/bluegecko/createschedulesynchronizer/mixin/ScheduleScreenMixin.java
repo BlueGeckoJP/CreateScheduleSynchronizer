@@ -67,6 +67,8 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     @Unique
     private static final int CSS_RENAME_OVERLAY_BUTTON_WIDTH = 72;
     @Unique
+    private static final int CSS_REMOVE_SCHEDULE_BUTTON_WIDTH = 96;
+    @Unique
     private static final int CSS_PANEL_GAP = 8;
     @Unique
     private static final int CSS_SCREEN_MARGIN = 4;
@@ -97,7 +99,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     @Unique
     private static final int CSS_RENAME_OVERLAY_Z = 500;
     @Unique
-    private static final int CSS_RENAME_PANEL_WIDTH = 260;
+    private static final int CSS_RENAME_PANEL_WIDTH = 300;
     @Unique
     private static final int CSS_RENAME_PANEL_HEIGHT = 94;
     @Unique
@@ -105,11 +107,15 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     @Unique
     private static final int CSS_RENAME_TITLE_Y_OFFSET = 10;
     @Unique
-    private static final int CSS_RENAME_BUTTON_X_OFFSET = 52;
+    private static final int CSS_RENAME_BUTTON_X_OFFSET = 72;
     @Unique
-    private static final int CSS_CANCEL_BUTTON_X_OFFSET = 138;
+    private static final int CSS_CANCEL_BUTTON_X_OFFSET = 158;
     @Unique
     private static final int CSS_RENAME_BUTTON_Y_OFFSET = 62;
+    @Unique
+    private static final int CSS_REMOVE_SCHEDULE_BUTTON_Y_OFFSET = 5;
+    @Unique
+    private static final int CSS_REMOVE_SCHEDULE_BUTTON_RIGHT_OFFSET = 10;
     @Unique
     private static final int CSS_PRIMARY_MOUSE_BUTTON = 0;
     @Unique
@@ -134,6 +140,10 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     private static final int CSS_COLOR_BUTTON = 0xFF3E4A5C;
     @Unique
     private static final int CSS_COLOR_BUTTON_HOVERED = 0xFF5A6F8F;
+    @Unique
+    private static final int CSS_COLOR_REMOVE_BUTTON = 0xFF8B2020;
+    @Unique
+    private static final int CSS_COLOR_REMOVE_BUTTON_HOVERED = 0xFFB52A2A;
     @Unique
     private static final int CSS_COLOR_NEW_BUTTON = 0xFF4A5C3E;
     @Unique
@@ -184,6 +194,8 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     private int css$idScrollOffset;
     @Unique
     private boolean css$renameOverlayOpen;
+    @Unique
+    private boolean css$removeConfirmationOpen;
     @Unique
     private ScheduleSyncEntry css$renameTarget;
     @Unique
@@ -259,6 +271,33 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
 
         graphics.renderOutline(x, y, width, height, CSS_COLOR_WHITE);
 
+        graphics.drawCenteredString(
+                minecraft.font,
+                Component.literal(label),
+                x + width / 2,
+                y + CSS_BUTTON_TEXT_Y_OFFSET,
+                CSS_COLOR_WHITE
+        );
+    }
+
+    @Unique
+    private static void css$drawRemoveButton(
+            GuiGraphics graphics,
+            Minecraft minecraft,
+            int x,
+            int y,
+            int width,
+            String label,
+            boolean hovered
+    ) {
+        graphics.fill(
+                x,
+                y,
+                x + width,
+                y + CSS_BUTTON_HEIGHT,
+                hovered ? CSS_COLOR_REMOVE_BUTTON_HOVERED : CSS_COLOR_REMOVE_BUTTON
+        );
+        graphics.renderOutline(x, y, width, CSS_BUTTON_HEIGHT, CSS_COLOR_WHITE);
         graphics.drawCenteredString(
                 minecraft.font,
                 Component.literal(label),
@@ -403,6 +442,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         Minecraft minecraft = Minecraft.getInstance();
 
         css$renameOverlayOpen = true;
+        css$removeConfirmationOpen = false;
         css$renameTarget = target;
 
         int boxWidth = CSS_RENAME_EDIT_BOX_WIDTH;
@@ -428,8 +468,30 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     @Unique
     private void css$closeRenameOverlay() {
         css$renameOverlayOpen = false;
+        css$removeConfirmationOpen = false;
         css$renameTarget = null;
         css$renameEditBox = null;
+    }
+
+    @Unique
+    private void css$openRemoveConfirmation() {
+        css$removeConfirmationOpen = true;
+        if (css$renameEditBox != null) {
+            css$renameEditBox.setFocused(false);
+        }
+    }
+
+    @Unique
+    private void css$submitRemoveSchedule() {
+        if (css$renameTarget == null) {
+            css$closeRenameOverlay();
+            return;
+        }
+
+        PacketDistributor.sendToServer(
+                new RemoveScheduleSyncIdPayload(css$renameTarget.id())
+        );
+        css$closeRenameOverlay();
     }
 
     @Unique
@@ -478,13 +540,41 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, CSS_COLOR_RENAME_PANEL);
         graphics.renderOutline(panelX, panelY, panelWidth, panelHeight, CSS_COLOR_WHITE);
 
+        if (css$removeConfirmationOpen) {
+            css$renderRemoveConfirmation(graphics, minecraft, mouseX, mouseY, panelX, panelY);
+            graphics.pose().popPose();
+            return;
+        }
+
         graphics.drawString(
                 minecraft.font,
-                Component.literal("Rename schedule"),
+                Component.literal("Rename or remove schedule"),
                 panelX + CSS_RENAME_TITLE_X_OFFSET,
                 panelY + CSS_RENAME_TITLE_Y_OFFSET,
                 CSS_COLOR_WHITE,
                 false
+        );
+
+        int removeScheduleX = panelX + panelWidth
+                - CSS_REMOVE_SCHEDULE_BUTTON_RIGHT_OFFSET
+                - CSS_REMOVE_SCHEDULE_BUTTON_WIDTH;
+        int removeScheduleY = panelY + CSS_REMOVE_SCHEDULE_BUTTON_Y_OFFSET;
+
+        css$drawRemoveButton(
+                graphics,
+                minecraft,
+                removeScheduleX,
+                removeScheduleY,
+                CSS_REMOVE_SCHEDULE_BUTTON_WIDTH,
+                "Remove schedule",
+                css$isInside(
+                        mouseX,
+                        mouseY,
+                        removeScheduleX,
+                        removeScheduleY,
+                        CSS_REMOVE_SCHEDULE_BUTTON_WIDTH,
+                        CSS_BUTTON_HEIGHT
+                )
         );
 
         if (css$renameEditBox != null) {
@@ -518,6 +608,58 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         );
 
         graphics.pose().popPose();
+    }
+
+    @Unique
+    private void css$renderRemoveConfirmation(
+            GuiGraphics graphics,
+            Minecraft minecraft,
+            int mouseX,
+            int mouseY,
+            int panelX,
+            int panelY
+    ) {
+        graphics.drawString(
+                minecraft.font,
+                Component.literal("Remove schedule?"),
+                panelX + CSS_RENAME_TITLE_X_OFFSET,
+                panelY + CSS_RENAME_TITLE_Y_OFFSET,
+                CSS_COLOR_WHITE,
+                false
+        );
+
+        String targetName = css$renameTarget == null ? "" : css$renameTarget.name();
+        graphics.drawCenteredString(
+                minecraft.font,
+                Component.literal(css$ellipsize(minecraft.font, targetName, CSS_RENAME_EDIT_BOX_WIDTH)),
+                panelX + CSS_RENAME_PANEL_WIDTH / 2,
+                panelY + 36,
+                CSS_COLOR_ROW_TEXT
+        );
+
+        int removeX = panelX + CSS_RENAME_BUTTON_X_OFFSET;
+        int cancelX = panelX + CSS_CANCEL_BUTTON_X_OFFSET;
+        int buttonY = panelY + CSS_RENAME_BUTTON_Y_OFFSET;
+
+        css$drawOverlayButton(
+                graphics,
+                minecraft,
+                cancelX,
+                buttonY,
+                CSS_RENAME_OVERLAY_BUTTON_WIDTH,
+                CSS_BUTTON_HEIGHT,
+                "Cancel",
+                css$isInside(mouseX, mouseY, cancelX, buttonY, CSS_RENAME_OVERLAY_BUTTON_WIDTH, CSS_BUTTON_HEIGHT)
+        );
+        css$drawRemoveButton(
+                graphics,
+                minecraft,
+                removeX,
+                buttonY,
+                CSS_RENAME_OVERLAY_BUTTON_WIDTH,
+                "Remove",
+                css$isInside(mouseX, mouseY, removeX, buttonY, CSS_RENAME_OVERLAY_BUTTON_WIDTH, CSS_BUTTON_HEIGHT)
+        );
     }
 
     @Unique
@@ -1165,6 +1307,32 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
             int cancelX = panelX + CSS_CANCEL_BUTTON_X_OFFSET;
             int buttonY = panelY + CSS_RENAME_BUTTON_Y_OFFSET;
 
+            if (css$removeConfirmationOpen) {
+                if (button == CSS_PRIMARY_MOUSE_BUTTON && css$isInside(
+                        mouseX, mouseY, renameX, buttonY, CSS_RENAME_OVERLAY_BUTTON_WIDTH, CSS_BUTTON_HEIGHT
+                )) {
+                    css$submitRemoveSchedule();
+                    callback.setReturnValue(true);
+                    return;
+                }
+
+                if (button == CSS_PRIMARY_MOUSE_BUTTON && css$isInside(
+                        mouseX, mouseY, cancelX, buttonY, CSS_RENAME_OVERLAY_BUTTON_WIDTH, CSS_BUTTON_HEIGHT
+                )) {
+                    css$closeRenameOverlay();
+                    callback.setReturnValue(true);
+                    return;
+                }
+
+                callback.setReturnValue(true);
+                return;
+            }
+
+            int removeScheduleX = panelX + panelWidth
+                    - CSS_REMOVE_SCHEDULE_BUTTON_RIGHT_OFFSET
+                    - CSS_REMOVE_SCHEDULE_BUTTON_WIDTH;
+            int removeScheduleY = panelY + CSS_REMOVE_SCHEDULE_BUTTON_Y_OFFSET;
+
             if (css$renameEditBox != null && css$renameEditBox.mouseClicked(mouseX, mouseY, button)) {
                 callback.setReturnValue(true);
                 return;
@@ -1182,6 +1350,19 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                     mouseX, mouseY, cancelX, buttonY, CSS_RENAME_OVERLAY_BUTTON_WIDTH, CSS_BUTTON_HEIGHT
             )) {
                 css$closeRenameOverlay();
+                callback.setReturnValue(true);
+                return;
+            }
+
+            if (button == CSS_PRIMARY_MOUSE_BUTTON && css$isInside(
+                    mouseX,
+                    mouseY,
+                    removeScheduleX,
+                    removeScheduleY,
+                    CSS_REMOVE_SCHEDULE_BUTTON_WIDTH,
+                    CSS_BUTTON_HEIGHT
+            )) {
+                css$openRemoveConfirmation();
                 callback.setReturnValue(true);
                 return;
             }
@@ -1356,12 +1537,23 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         }
 
         if (keyCode == CSS_ESCAPE_KEY) { // ESC
+            if (css$removeConfirmationOpen) {
+                css$closeRenameOverlay();
+                callback.setReturnValue(true);
+                return;
+            }
+
             css$closeRenameOverlay();
             callback.setReturnValue(true);
             return;
         }
 
         if (keyCode == CSS_ENTER_KEY || keyCode == CSS_NUMPAD_ENTER_KEY) { // ENTER / NUMPAD_ENTER
+            if (css$removeConfirmationOpen) {
+                callback.setReturnValue(true);
+                return;
+            }
+
             css$submitRenameOverlay();
             callback.setReturnValue(true);
             return;
@@ -1385,7 +1577,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
             return false;
         }
 
-        if (css$renameEditBox != null) {
+        if (!css$removeConfirmationOpen && css$renameEditBox != null) {
             css$renameEditBox.charTyped(codePoint, modifiers);
         }
 
