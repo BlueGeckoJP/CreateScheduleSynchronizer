@@ -37,13 +37,15 @@ import java.util.UUID;
 @Mixin(value = ScheduleScreen.class, remap = false)
 public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<ScheduleMenu> implements RenameOverlayHandler {
     @Unique
-    private static final int CSS_PANEL_WIDTH = 92;
+    private static final int CSS_PANEL_WIDTH = 108;
     @Unique
     private static final int CSS_PANEL_HEIGHT = 190;
     @Unique
-    private static final int CSS_BUTTON_WIDTH = 72;
+    private static final int CSS_BUTTON_WIDTH = 88;
     @Unique
     private static final int CSS_BUTTON_HEIGHT = 18;
+    @Unique
+    private static final int CSS_RENAME_OVERLAY_BUTTON_WIDTH = 72;
     @Unique
     private static final int CSS_PANEL_GAP = 8;
     @Unique
@@ -412,10 +414,10 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 minecraft,
                 renameX,
                 buttonY,
-                CSS_BUTTON_WIDTH,
+                CSS_RENAME_OVERLAY_BUTTON_WIDTH,
                 CSS_BUTTON_HEIGHT,
                 "Rename",
-                css$isInside(mouseX, mouseY, renameX, buttonY, CSS_BUTTON_WIDTH, CSS_BUTTON_HEIGHT)
+                css$isInside(mouseX, mouseY, renameX, buttonY, CSS_RENAME_OVERLAY_BUTTON_WIDTH, CSS_BUTTON_HEIGHT)
         );
 
         css$drawOverlayButton(
@@ -423,10 +425,10 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 minecraft,
                 cancelX,
                 buttonY,
-                CSS_BUTTON_WIDTH,
+                CSS_RENAME_OVERLAY_BUTTON_WIDTH,
                 CSS_BUTTON_HEIGHT,
                 "Cancel",
-                css$isInside(mouseX, mouseY, cancelX, buttonY, CSS_BUTTON_WIDTH, CSS_BUTTON_HEIGHT)
+                css$isInside(mouseX, mouseY, cancelX, buttonY, CSS_RENAME_OVERLAY_BUTTON_WIDTH, CSS_BUTTON_HEIGHT)
         );
 
         graphics.pose().popPose();
@@ -996,7 +998,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
             }
 
             if (button == CSS_PRIMARY_MOUSE_BUTTON && css$isInside(
-                    mouseX, mouseY, renameX, buttonY, CSS_BUTTON_WIDTH, CSS_BUTTON_HEIGHT
+                    mouseX, mouseY, renameX, buttonY, CSS_RENAME_OVERLAY_BUTTON_WIDTH, CSS_BUTTON_HEIGHT
             )) {
                 css$submitRenameOverlay();
                 callback.setReturnValue(true);
@@ -1004,7 +1006,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
             }
 
             if (button == CSS_PRIMARY_MOUSE_BUTTON && css$isInside(
-                    mouseX, mouseY, cancelX, buttonY, CSS_BUTTON_WIDTH, CSS_BUTTON_HEIGHT
+                    mouseX, mouseY, cancelX, buttonY, CSS_RENAME_OVERLAY_BUTTON_WIDTH, CSS_BUTTON_HEIGHT
             )) {
                 css$closeRenameOverlay();
                 callback.setReturnValue(true);
