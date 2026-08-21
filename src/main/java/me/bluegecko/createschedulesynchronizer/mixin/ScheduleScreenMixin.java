@@ -147,7 +147,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     @Unique
     private static final int CSS_EMPTY_LIST_X_INSET = 44;
     @Unique
-    private static final int CSS_EMPTY_LIST_Y_OFFSET = 136;
+    private static final int CSS_EMPTY_LIST_Y_OFFSET = 130;
     @Unique
     private static final int CSS_ROW_HORIZONTAL_PADDING = 2;
     @Unique
