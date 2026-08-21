@@ -27,6 +27,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -38,8 +39,6 @@ import java.util.UUID;
 public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<ScheduleMenu> implements RenameOverlayHandler {
     @Unique
     private static final int CSS_PANEL_WIDTH = 108;
-    @Unique
-    private static final int CSS_PANEL_HEIGHT = 190;
     @Unique
     private static final int CSS_BUTTON_WIDTH = 88;
     @Unique
@@ -245,6 +244,11 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     @Unique
     private static int css$panelY(AbstractContainerScreen<?> screen) {
         return screen.getGuiTop();
+    }
+
+    @Unique
+    private static int css$panelHeight(AbstractContainerScreen<?> screen) {
+        return screen.getYSize();
     }
 
     @Unique
@@ -465,7 +469,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                         css$panelX(screen),
                         css$panelY(screen),
                         CSS_PANEL_WIDTH,
-                        CSS_PANEL_HEIGHT
+                        css$panelHeight(screen)
                 )
         );
 
@@ -606,7 +610,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 panelX,
                 panelY,
                 panelX + CSS_PANEL_WIDTH,
-                panelY + CSS_PANEL_HEIGHT,
+                panelY + css$panelHeight(screen),
                 CSS_COLOR_PANEL_BACKGROUND
         );
 
@@ -614,7 +618,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 panelX,
                 panelY,
                 CSS_PANEL_WIDTH,
-                CSS_PANEL_HEIGHT,
+                css$panelHeight(screen),
                 CSS_COLOR_PANEL_BORDER
         );
 
@@ -967,6 +971,18 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         if (css$renameOverlayOpen) {
             css$renderRenameOverlay(graphics, mouseX, mouseY);
         }
+    }
+
+    @ModifyArg(
+            method = "renderForeground",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/createmod/catnip/gui/element/GuiGameElement;of(Lnet/minecraft/world/item/ItemStack;)Lnet/createmod/catnip/gui/element/GuiGameElement$GuiRenderBuilder;"
+            ),
+            index = 0
+    )
+    private ItemStack css$hideLargeScheduleIcon(ItemStack stack) {
+        return css$isSyncScheduleScreen() ? ItemStack.EMPTY : stack;
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
