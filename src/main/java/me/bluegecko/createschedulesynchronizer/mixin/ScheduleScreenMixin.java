@@ -141,6 +141,10 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     @Unique
     private static final int CSS_COLOR_BUTTON_HOVERED = 0xFF5A6F8F;
     @Unique
+    private static final int CSS_COLOR_SAVE_BUTTON = 0xFFB36B00;
+    @Unique
+    private static final int CSS_COLOR_SAVE_BUTTON_HOVERED = 0xFFD98200;
+    @Unique
     private static final int CSS_COLOR_REMOVE_BUTTON = 0xFF8B2020;
     @Unique
     private static final int CSS_COLOR_REMOVE_BUTTON_HOVERED = 0xFFB52A2A;
@@ -206,6 +210,12 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     private UUID css$draftTrainColorId;
     @Unique
     private int css$draftTrainColor;
+    @Unique
+    private CompoundTag css$lastSavedScheduleTag;
+    @Unique
+    private UUID css$lastSavedTrainColorId;
+    @Unique
+    private int css$lastSavedTrainColor;
 
     @Shadow
     private Schedule schedule;
@@ -435,6 +445,60 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 css$getDraftTrainColor(entry) + direction,
                 CSS_TRAIN_COLOR_COUNT
         );
+    }
+
+    @Unique
+    private void css$markCurrentStateAsSaved() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null) {
+            return;
+        }
+
+        css$lastSavedScheduleTag = schedule.write(
+                minecraft.player.registryAccess()
+        );
+
+        ScheduleSyncEntry currentEntry = ScheduleSyncClientState.getCurrentEntry();
+        if (currentEntry == null) {
+            css$lastSavedTrainColorId = null;
+            css$lastSavedTrainColor = SaveScheduleSyncPayload.UNCHANGED_TRAIN_COLOR;
+            return;
+        }
+
+        css$lastSavedTrainColorId = currentEntry.id();
+        css$lastSavedTrainColor = css$getDraftTrainColor(currentEntry);
+    }
+
+    @Unique
+    private boolean css$hasUnsavedChanges() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null) {
+            return false;
+        }
+
+        if (css$lastSavedScheduleTag == null) {
+            css$markCurrentStateAsSaved();
+            return false;
+        }
+
+        CompoundTag currentScheduleTag = schedule.write(
+                minecraft.player.registryAccess()
+        );
+        if (!css$lastSavedScheduleTag.equals(currentScheduleTag)) {
+            return true;
+        }
+
+        ScheduleSyncEntry currentEntry = ScheduleSyncClientState.getCurrentEntry();
+        if (currentEntry == null) {
+            return false;
+        }
+
+        if (!currentEntry.id().equals(css$lastSavedTrainColorId)) {
+            css$lastSavedTrainColorId = currentEntry.id();
+            css$lastSavedTrainColor = currentEntry.syncTrainColor();
+        }
+
+        return css$getDraftTrainColor(currentEntry) != css$lastSavedTrainColor;
     }
 
     @Unique
@@ -744,6 +808,10 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
             return;
         }
 
+        if (css$lastSavedScheduleTag == null) {
+            css$markCurrentStateAsSaved();
+        }
+
         PacketDistributor.sendToServer(new RequestScheduleSyncIdsPayload());
     }
 
@@ -762,6 +830,10 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 Minecraft.getInstance().player.registryAccess(),
                 pending
         );
+        css$lastSavedScheduleTag = schedule.write(
+                Minecraft.getInstance().player.registryAccess()
+        );
+        css$lastSavedTrainColorId = null;
 
         init();
     }
@@ -940,7 +1012,8 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
 
         int buttonX = css$saveButtonX(screen);
         int buttonY = css$saveButtonY(screen);
-        boolean hovered = css$isInside(
+        boolean hasUnsavedChanges = css$hasUnsavedChanges();
+        boolean hovered = hasUnsavedChanges && css$isInside(
                 mouseX,
                 mouseY,
                 buttonX,
@@ -954,7 +1027,9 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 buttonY,
                 buttonX + CSS_BUTTON_WIDTH,
                 buttonY + CSS_BUTTON_HEIGHT,
-                hovered ? CSS_COLOR_BUTTON_HOVERED : CSS_COLOR_BUTTON
+                hasUnsavedChanges
+                        ? (hovered ? CSS_COLOR_SAVE_BUTTON_HOVERED : CSS_COLOR_SAVE_BUTTON)
+                        : CSS_COLOR_DISABLED_BUTTON
         );
 
         graphics.renderOutline(
@@ -962,7 +1037,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 buttonY,
                 CSS_BUTTON_WIDTH,
                 CSS_BUTTON_HEIGHT,
-                CSS_COLOR_WHITE
+                hasUnsavedChanges ? CSS_COLOR_WHITE : CSS_COLOR_DISABLED_TEXT
         );
 
         graphics.drawCenteredString(
@@ -970,7 +1045,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 Component.literal("Save"),
                 buttonX + CSS_BUTTON_WIDTH / 2,
                 buttonY + CSS_BUTTON_TEXT_Y_OFFSET,
-                CSS_COLOR_WHITE
+                hasUnsavedChanges ? CSS_COLOR_WHITE : CSS_COLOR_DISABLED_TEXT
         );
 
         int newButtonX = css$newButtonX(screen);
@@ -1392,6 +1467,11 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 CSS_BUTTON_WIDTH,
                 CSS_BUTTON_HEIGHT
         )) {
+            if (!css$hasUnsavedChanges()) {
+                callback.setReturnValue(true);
+                return;
+            }
+
             ScheduleSyncEntry currentEntry = ScheduleSyncClientState.getCurrentEntry();
             int syncTrainColor = currentEntry == null ? SaveScheduleSyncPayload.UNCHANGED_TRAIN_COLOR : css$getDraftTrainColor(currentEntry);
 
@@ -1401,6 +1481,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                             syncTrainColor
                     )
             );
+            css$markCurrentStateAsSaved();
             callback.setReturnValue(true);
             return;
         }
