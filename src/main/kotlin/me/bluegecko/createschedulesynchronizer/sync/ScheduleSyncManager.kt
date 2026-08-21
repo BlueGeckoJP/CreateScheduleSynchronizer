@@ -118,13 +118,14 @@ object ScheduleSyncManager {
         )
 
         val store = ScheduleSyncSavedData.get(level)
-        if (store.isTrainNameSyncEnabled(owner, syncId)) {
+        if (store.isTrainIdentitySyncEnabled(owner, syncId)) {
             store.getDisplayName(owner, syncId)?.let { scheduleName ->
-                RunningTrainScheduleSync.syncLinkedTrainNames(
+                RunningTrainScheduleSync.syncLinkedTrainIdentities(
                     level,
                     owner,
                     syncId,
-                    scheduleName
+                    scheduleName,
+                    store.getSyncTrainColor(owner, syncId)
                 )
             }
         }
@@ -162,13 +163,14 @@ object ScheduleSyncManager {
         )
 
         val store = ScheduleSyncSavedData.get(level)
-        if (store.isTrainNameSyncEnabled(owner, syncId)) {
+        if (store.isTrainIdentitySyncEnabled(owner, syncId)) {
             store.getDisplayName(owner, syncId)?.let { scheduleName ->
-                RunningTrainScheduleSync.syncLinkedTrainNames(
+                RunningTrainScheduleSync.syncLinkedTrainIdentities(
                     level,
                     owner,
                     syncId,
-                    scheduleName
+                    scheduleName,
+                    store.getSyncTrainColor(owner, syncId)
                 )
             }
         }

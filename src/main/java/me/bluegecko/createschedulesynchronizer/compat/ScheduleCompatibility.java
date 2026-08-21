@@ -66,12 +66,12 @@ public final class ScheduleCompatibility {
 
     /*
      * Immediately after a schedule is assigned to a train,
-     * update the train name if name synchronization is enabled
+     * update the train name and color if synchronization is enabled
      *
-     * Manual renames are not monitored, so the player-defined name will be,
-     * preserved until this process is called again
+     * Manual name and color changes are not monitored, so player-defined
+     * values are preserved until this process is called again
      */
-    public static boolean syncTrainNameAfterScheduleApplied(
+    public static boolean syncTrainIdentityAfterScheduleApplied(
             ScheduleRuntime runtime,
             ServerLevel level
     ) {
@@ -92,25 +92,27 @@ public final class ScheduleCompatibility {
 
         ScheduleSyncSavedData data = ScheduleSyncSavedData.get(level);
 
-        if (!data.isTrainNameSyncEnabled(owner, syncId)) {
+        if (!data.isTrainIdentitySyncEnabled(owner, syncId)) {
             return false;
         }
 
         String scheduleName = data.getDisplayName(owner, syncId);
+        Integer syncTrainColor = data.getSyncTrainColor(owner, syncId);
 
         if (scheduleName == null || scheduleName.isBlank()) {
             return false;
         }
 
-        boolean renamed = RunningTrainScheduleSync.syncTrainName(
+        boolean changed = RunningTrainScheduleSync.syncTrainIdentity(
                 runtime.train,
-                scheduleName
+                scheduleName,
+                syncTrainColor
         );
 
-        if (renamed) {
+        if (changed) {
             Create.RAILWAYS.sided(level).markTracksDirty();
         }
 
-        return renamed;
+        return changed;
     }
 }

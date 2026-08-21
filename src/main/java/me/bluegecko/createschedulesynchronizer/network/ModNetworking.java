@@ -78,9 +78,9 @@ public final class ModNetworking {
         );
 
         registrar.playToServer(
-                ToggleTrainNameSyncPayload.TYPE,
-                ToggleTrainNameSyncPayload.STREAM_CODEC,
-                ToggleTrainNameSyncPayload::handle
+                ToggleTrainIdentitySyncPayload.TYPE,
+                ToggleTrainIdentitySyncPayload.STREAM_CODEC,
+                ToggleTrainIdentitySyncPayload::handle
         );
     }
 }

@@ -152,7 +152,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     @Unique
     private static final int CSS_ROW_VERTICAL_PADDING = 1;
     @Unique
-    private static final int CSS_TRAIN_NAME_SYNC_BUTTON_Y_OFFSET = 104;
+    private static final int CSS_TRAIN_IDENTITY_SYNC_BUTTON_Y_OFFSET = 104;
     @Unique
     private static final int CSS_COLOR_DISABLED_BUTTON = 0xFF303030;
     @Unique
@@ -232,17 +232,17 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     }
 
     @Unique
-    private static int css$trainNameSyncButtonX(
+    private static int css$trainIdentitySyncButtonX(
             AbstractContainerScreen<?> screen
     ) {
         return css$panelX(screen) + CSS_BUTTON_X_OFFSET;
     }
 
     @Unique
-    private static int css$trainNameSyncButtonY(
+    private static int css$trainIdentitySyncButtonY(
             AbstractContainerScreen<?> screen
     ) {
-        return css$panelY(screen) + CSS_TRAIN_NAME_SYNC_BUTTON_Y_OFFSET;
+        return css$panelY(screen) + CSS_TRAIN_IDENTITY_SYNC_BUTTON_Y_OFFSET;
     }
 
     @Unique
@@ -804,69 +804,69 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 CSS_COLOR_WHITE
         );
 
-        int trainNameSyncButtonX = css$trainNameSyncButtonX(screen);
-        int trainNameSyncButtonY = css$trainNameSyncButtonY(screen);
+        int trainIdentitySyncButtonX = css$trainIdentitySyncButtonX(screen);
+        int trainIdentitySyncButtonY = css$trainIdentitySyncButtonY(screen);
 
-        boolean trainNameSyncAvailable = currentEntry != null;
-        boolean trainNameSyncHovered =
-                trainNameSyncAvailable
+        boolean trainIdentitySyncAvailable = currentEntry != null;
+        boolean trainIdentitySyncHovered =
+                trainIdentitySyncAvailable
                         && css$isInside(
                         mouseX,
                         mouseY,
-                        trainNameSyncButtonX,
-                        trainNameSyncButtonY,
+                        trainIdentitySyncButtonX,
+                        trainIdentitySyncButtonY,
                         CSS_BUTTON_WIDTH,
                         CSS_BUTTON_HEIGHT
                 );
 
-        int trainNameSyncColor;
+        int trainIdentitySyncColor;
 
-        if (!trainNameSyncAvailable) {
-            trainNameSyncColor = CSS_COLOR_DISABLED_BUTTON;
-        } else if (trainNameSyncHovered) {
-            trainNameSyncColor = CSS_COLOR_BUTTON_HOVERED;
+        if (!trainIdentitySyncAvailable) {
+            trainIdentitySyncColor = CSS_COLOR_DISABLED_BUTTON;
+        } else if (trainIdentitySyncHovered) {
+            trainIdentitySyncColor = CSS_COLOR_BUTTON_HOVERED;
         } else {
-            trainNameSyncColor = CSS_COLOR_BUTTON;
+            trainIdentitySyncColor = CSS_COLOR_BUTTON;
         }
 
         graphics.fill(
-                trainNameSyncButtonX,
-                trainNameSyncButtonY,
-                trainNameSyncButtonX + CSS_BUTTON_WIDTH,
-                trainNameSyncButtonY + CSS_BUTTON_HEIGHT,
-                trainNameSyncColor
+                trainIdentitySyncButtonX,
+                trainIdentitySyncButtonY,
+                trainIdentitySyncButtonX + CSS_BUTTON_WIDTH,
+                trainIdentitySyncButtonY + CSS_BUTTON_HEIGHT,
+                trainIdentitySyncColor
         );
 
         graphics.renderOutline(
-                trainNameSyncButtonX,
-                trainNameSyncButtonY,
+                trainIdentitySyncButtonX,
+                trainIdentitySyncButtonY,
                 CSS_BUTTON_WIDTH,
                 CSS_BUTTON_HEIGHT,
-                trainNameSyncAvailable ? CSS_COLOR_WHITE : CSS_COLOR_DISABLED_TEXT
+                trainIdentitySyncAvailable ? CSS_COLOR_WHITE : CSS_COLOR_DISABLED_TEXT
         );
 
-        Component trainNameSyncText;
+        Component trainIdentitySyncText;
 
         if (currentEntry == null) {
-            trainNameSyncText = Component.translatable(
-                    "gui.createschedulesynchronizer.train_name_sync.unavailable"
+            trainIdentitySyncText = Component.translatable(
+                    "gui.createschedulesynchronizer.train_identity_sync.unavailable"
             );
-        } else if (currentEntry.syncTrainName()) {
-            trainNameSyncText = Component.translatable(
-                    "gui.createschedulesynchronizer.train_name_sync.on"
+        } else if (currentEntry.syncTrainIdentity()) {
+            trainIdentitySyncText = Component.translatable(
+                    "gui.createschedulesynchronizer.train_identity_sync.on"
             );
         } else {
-            trainNameSyncText = Component.translatable(
-                    "gui.createschedulesynchronizer.train_name_sync.off"
+            trainIdentitySyncText = Component.translatable(
+                    "gui.createschedulesynchronizer.train_identity_sync.off"
             );
         }
 
         graphics.drawCenteredString(
                 minecraft.font,
-                trainNameSyncText,
-                trainNameSyncButtonX + CSS_BUTTON_WIDTH / 2,
-                trainNameSyncButtonY + CSS_BUTTON_TEXT_Y_OFFSET,
-                trainNameSyncAvailable ? CSS_COLOR_WHITE : CSS_COLOR_DISABLED_TEXT
+                trainIdentitySyncText,
+                trainIdentitySyncButtonX + CSS_BUTTON_WIDTH / 2,
+                trainIdentitySyncButtonY + CSS_BUTTON_TEXT_Y_OFFSET,
+                trainIdentitySyncAvailable ? CSS_COLOR_WHITE : CSS_COLOR_DISABLED_TEXT
         );
 
 
@@ -1099,8 +1099,8 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
             return;
         }
 
-        int trainNameSyncButtonX = css$trainNameSyncButtonX(screen);
-        int trainNameSyncButtonY = css$trainNameSyncButtonY(screen);
+        int trainIdentitySyncButtonX = css$trainIdentitySyncButtonX(screen);
+        int trainIdentitySyncButtonY = css$trainIdentitySyncButtonY(screen);
 
         ScheduleSyncEntry currentEntry =
                 ScheduleSyncClientState.getCurrentEntry();
@@ -1110,15 +1110,15 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 && css$isInside(
                 mouseX,
                 mouseY,
-                trainNameSyncButtonX,
-                trainNameSyncButtonY,
+                trainIdentitySyncButtonX,
+                trainIdentitySyncButtonY,
                 CSS_BUTTON_WIDTH,
                 CSS_BUTTON_HEIGHT
         )) {
             PacketDistributor.sendToServer(
-                    new ToggleTrainNameSyncPayload(
+                    new ToggleTrainIdentitySyncPayload(
                             currentEntry.id(),
-                            !currentEntry.syncTrainName()
+                            !currentEntry.syncTrainIdentity()
                     )
             );
 

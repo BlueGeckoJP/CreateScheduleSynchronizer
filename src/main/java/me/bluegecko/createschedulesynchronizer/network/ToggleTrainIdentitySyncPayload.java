@@ -12,27 +12,27 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.UUID;
 
-public record ToggleTrainNameSyncPayload(UUID syncId, boolean enabled) implements CustomPacketPayload {
-    public static final Type<ToggleTrainNameSyncPayload> TYPE =
+public record ToggleTrainIdentitySyncPayload(UUID syncId, boolean enabled) implements CustomPacketPayload {
+    public static final Type<ToggleTrainIdentitySyncPayload> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(
                     Createschedulesynchronizer.ID,
-                    "toggle_train_name_sync"
+                    "toggle_train_identity_sync"
             ));
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, ToggleTrainNameSyncPayload> STREAM_CODEC =
+    public static final StreamCodec<RegistryFriendlyByteBuf, ToggleTrainIdentitySyncPayload> STREAM_CODEC =
             StreamCodec.of(
                     (buffer, payload) -> {
                         buffer.writeUUID(payload.syncId());
                         buffer.writeBoolean(payload.enabled());
                     },
-                    buffer -> new ToggleTrainNameSyncPayload(
+                    buffer -> new ToggleTrainIdentitySyncPayload(
                             buffer.readUUID(),
                             buffer.readBoolean()
                     )
             );
 
     public static void handle(
-            ToggleTrainNameSyncPayload payload,
+            ToggleTrainIdentitySyncPayload payload,
             IPayloadContext context
     ) {
         if (!(context.player() instanceof ServerPlayer player)) {
@@ -44,7 +44,7 @@ public record ToggleTrainNameSyncPayload(UUID syncId, boolean enabled) implement
             ScheduleSyncSavedData data =
                     ScheduleSyncSavedData.get(player.serverLevel());
 
-            if (!data.setTrainNameSyncEnabled(
+            if (!data.setTrainIdentitySyncEnabled(
                     owner,
                     payload.syncId(),
                     payload.enabled()
@@ -54,13 +54,32 @@ public record ToggleTrainNameSyncPayload(UUID syncId, boolean enabled) implement
 
             if (payload.enabled()) {
                 String name = data.getDisplayName(owner, payload.syncId());
+                Integer syncTrainColor = data.getSyncTrainColor(owner, payload.syncId());
+
+                if (syncTrainColor == null) {
+                    syncTrainColor =
+                            RunningTrainScheduleSync.findLinkedTrainColor(
+                                    player.serverLevel(),
+                                    owner,
+                                    payload.syncId()
+                            );
+
+                    if (syncTrainColor != null) {
+                        data.setSyncTrainColor(
+                                owner,
+                                payload.syncId(),
+                                syncTrainColor
+                        );
+                    }
+                }
 
                 if (name != null) {
-                    RunningTrainScheduleSync.syncLinkedTrainNames(
+                    RunningTrainScheduleSync.syncLinkedTrainIdentities(
                             player.serverLevel(),
                             owner,
                             payload.syncId(),
-                            name
+                            name,
+                            syncTrainColor
                     );
                 }
             }

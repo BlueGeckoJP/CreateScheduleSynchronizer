@@ -34,7 +34,7 @@ public record ScheduleSyncIdsPayload(List<ScheduleSyncEntry> entries) implements
                     (buffer, entry) -> {
                         UUID_CODEC.encode(buffer, entry.id());
                         buffer.writeUtf(entry.name(), 64);
-                        buffer.writeBoolean(entry.syncTrainName());
+                        buffer.writeBoolean(entry.syncTrainIdentity());
                     },
                     buffer -> new ScheduleSyncEntry(
                             UUID_CODEC.decode(buffer),

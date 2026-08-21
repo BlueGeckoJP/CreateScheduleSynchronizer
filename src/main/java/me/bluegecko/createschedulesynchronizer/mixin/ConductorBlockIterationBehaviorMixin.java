@@ -75,7 +75,7 @@ public abstract class ConductorBlockIterationBehaviorMixin {
         runtime.setSchedule(schedule, auto);
 
         if (player.level() instanceof ServerLevel serverLevel) {
-            ScheduleCompatibility.syncTrainNameAfterScheduleApplied(
+            ScheduleCompatibility.syncTrainIdentityAfterScheduleApplied(
                     runtime,
                     serverLevel
             );

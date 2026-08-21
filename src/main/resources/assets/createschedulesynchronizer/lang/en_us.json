@@ -3,7 +3,7 @@
   "itemGroup.createschedulesynchronizer.main": "Synchronized Train Schedule",
   "tooltip.createschedulesynchronizer.train_count": "In use: %s train(s)",
   "tooltip.createschedulesynchronizer.train_count.loading": "In use: loading...",
-  "gui.createschedulesynchronizer.train_name_sync.on": "Name Sync: ON",
-  "gui.createschedulesynchronizer.train_name_sync.off": "Name Sync: OFF",
-  "gui.createschedulesynchronizer.train_name_sync.unavailable": "Name Sync: --"
+  "gui.createschedulesynchronizer.train_identity_sync.on": "Train Identity Sync: ON",
+  "gui.createschedulesynchronizer.train_identity_sync.off": "Train Identity Sync: OFF",
+  "gui.createschedulesynchronizer.train_identity_sync.unavailable": "Train Identity Sync: --"
 }

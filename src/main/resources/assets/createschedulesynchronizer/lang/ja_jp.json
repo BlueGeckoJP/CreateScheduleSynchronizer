@@ -3,7 +3,7 @@
   "itemGroup.createschedulesynchronizer.main": "同期式鉄道時刻表",
   "tooltip.createschedulesynchronizer.train_count": "使用中: %s編成",
   "tooltip.createschedulesynchronizer.train_count.loading": "使用中: 取得中...",
-  "gui.createschedulesynchronizer.train_name_sync.on": "名前同期: ON",
-  "gui.createschedulesynchronizer.train_name_sync.off": "名前同期: OFF",
-  "gui.createschedulesynchronizer.train_name_sync.unavailable": "名前同期: --"
+  "gui.createschedulesynchronizer.train_identity_sync.on": "列車情報同期: ON",
+  "gui.createschedulesynchronizer.train_identity_sync.off": "列車情報同期: OFF",
+  "gui.createschedulesynchronizer.train_identity_sync.unavailable": "列車情報同期: --"
 }

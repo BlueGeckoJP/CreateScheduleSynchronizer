@@ -58,13 +58,14 @@ public record RenameScheduleSyncIdPayload(UUID syncId, String name) implements C
             data.setDisplayName(owner, payload.syncId(), payload.name());
             String displayName = data.getDisplayName(owner, payload.syncId());
 
-            if (data.isTrainNameSyncEnabled(owner, payload.syncId())) {
+            if (data.isTrainIdentitySyncEnabled(owner, payload.syncId())) {
                 if (displayName != null) {
-                    RunningTrainScheduleSync.syncLinkedTrainNames(
+                    RunningTrainScheduleSync.syncLinkedTrainIdentities(
                             player.serverLevel(),
                             owner,
                             payload.syncId(),
-                            displayName
+                            displayName,
+                            data.getSyncTrainColor(owner, payload.syncId())
                     );
                 }
             }

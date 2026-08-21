@@ -16,7 +16,8 @@ class ScheduleSyncSavedData : SavedData() {
     data class StoredSchedule(
         var name: String,
         var scheduleTag: CompoundTag,
-        var syncTrainName: Boolean = false,
+        var syncTrainIdentity: Boolean = false,
+        var syncTrainColor: Int? = null,
     )
 
     private val schedulesByOwner: MutableMap<UUID, MutableMap<UUID, StoredSchedule>> = linkedMapOf()
@@ -45,7 +46,8 @@ class ScheduleSyncSavedData : SavedData() {
         schedules[id] = StoredSchedule(
             name = displayName,
             scheduleTag = scheduleTag.copy(),
-            syncTrainName = existing?.syncTrainName ?: false,
+            syncTrainIdentity = existing?.syncTrainIdentity ?: false,
+            syncTrainColor = existing?.syncTrainColor
         )
 
         setDirty()
@@ -61,7 +63,7 @@ class ScheduleSyncSavedData : SavedData() {
 
     fun namedEntries(owner: UUID): List<ScheduleSyncEntry> {
         return schedulesOfOrNull(owner)?.map { (id, stored) ->
-            ScheduleSyncEntry(id, stored.name, stored.syncTrainName)
+            ScheduleSyncEntry(id, stored.name, stored.syncTrainIdentity)
         } ?: emptyList()
     }
 
@@ -96,14 +98,28 @@ class ScheduleSyncSavedData : SavedData() {
         putScheduleTag(owner, id, schedule.write(registries), name)
     }
 
-    fun isTrainNameSyncEnabled(owner: UUID, id: UUID): Boolean =
-        schedulesOfOrNull(owner)?.get(id)?.syncTrainName ?: false
+    fun isTrainIdentitySyncEnabled(owner: UUID, id: UUID): Boolean =
+        schedulesOfOrNull(owner)?.get(id)?.syncTrainIdentity ?: false
 
-    fun setTrainNameSyncEnabled(owner: UUID, id: UUID, enabled: Boolean): Boolean {
+    fun setTrainIdentitySyncEnabled(owner: UUID, id: UUID, enabled: Boolean): Boolean {
         val stored = schedulesOfOrNull(owner)?.get(id) ?: return false
 
-        if (stored.syncTrainName != enabled) {
-            stored.syncTrainName = enabled
+        if (stored.syncTrainIdentity != enabled) {
+            stored.syncTrainIdentity = enabled
+            setDirty()
+        }
+
+        return true
+    }
+
+    fun getSyncTrainColor(owner: UUID, id: UUID): Int? =
+        schedulesOfOrNull(owner)?.get(id)?.syncTrainColor
+
+    fun setSyncTrainColor(owner: UUID, id: UUID, color: Int): Boolean {
+        val stored = schedulesOfOrNull(owner)?.get(id) ?: return false
+
+        if (stored.syncTrainColor != color) {
+            stored.syncTrainColor = color
             setDirty()
         }
 
@@ -124,7 +140,10 @@ class ScheduleSyncSavedData : SavedData() {
                 entry.putUUID("Id", id)
                 entry.putString("Name", stored.name)
                 entry.put("Schedule", stored.scheduleTag.copy())
-                entry.putBoolean("SyncTrainName", stored.syncTrainName)
+                entry.putBoolean("SyncTrainIdentity", stored.syncTrainIdentity)
+                stored.syncTrainColor?.let {
+                    entry.putInt("SyncTrainColor", it)
+                }
                 schedulesList.add(entry)
             }
 
@@ -192,7 +211,18 @@ class ScheduleSyncSavedData : SavedData() {
                     schedules[id] = StoredSchedule(
                         name = sanitizeDisplayName(rawName, id),
                         scheduleTag = entry.getCompound("Schedule").copy(),
-                        syncTrainName = entry.getBoolean("SyncTrainName"),
+                        syncTrainIdentity =
+                            if (entry.contains("SyncTrainIdentity", Tag.TAG_BYTE.toInt())) {
+                                entry.getBoolean("SyncTrainIdentity")
+                            } else {
+                                entry.getBoolean("SyncTrainName")
+                            },
+                        syncTrainColor =
+                            if (entry.contains("SyncTrainColor", Tag.TAG_INT.toInt())) {
+                                entry.getInt("SyncTrainColor")
+                            } else {
+                                null
+                            },
                     )
                 }
             }
