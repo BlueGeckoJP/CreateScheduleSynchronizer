@@ -11,7 +11,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record SaveScheduleSyncPayload(CompoundTag scheduleTag) implements CustomPacketPayload {
+public record SaveScheduleSyncPayload(CompoundTag scheduleTag, int syncTrainColor) implements CustomPacketPayload {
+    public static final int UNCHANGED_TRAIN_COLOR = -1;
+
     public static final Type<SaveScheduleSyncPayload> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(
                     Createschedulesynchronizer.ID,
@@ -19,8 +21,14 @@ public record SaveScheduleSyncPayload(CompoundTag scheduleTag) implements Custom
             ));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SaveScheduleSyncPayload> STREAM_CODEC = StreamCodec.of(
-            (buffer, payload) -> buffer.writeNbt(payload.scheduleTag()),
-            buffer -> new SaveScheduleSyncPayload(buffer.readNbt())
+            (buffer, payload) -> {
+                buffer.writeNbt(payload.scheduleTag());
+                buffer.writeVarInt(payload.syncTrainColor());
+            },
+            buffer -> new SaveScheduleSyncPayload(
+                    buffer.readNbt(),
+                    buffer.readVarInt()
+            )
     );
 
     public static void handle(
@@ -34,14 +42,18 @@ public record SaveScheduleSyncPayload(CompoundTag scheduleTag) implements Custom
         context.enqueueWork(() -> {
             ScheduleSyncManager.SaveResult result = ScheduleSyncManager.saveMainHandScheduleToStore(
                     player,
-                    payload.scheduleTag()
+                    payload.scheduleTag(),
+                    payload.syncTrainColor()
             );
 
             switch (result) {
-                case SAVED -> player.displayClientMessage(
-                        Component.literal("Synchronized schedule saved."),
-                        true
-                );
+                case SAVED -> {
+                    ScheduleSyncNetworkHelper.sendSyncPanelState(player);
+                    player.displayClientMessage(
+                            Component.literal("Synchronized schedule saved."),
+                            true
+                    );
+                }
 
                 case NOT_LINKED -> player.displayClientMessage(
                         Component.literal("This schedule is not linked to a sync ID."),

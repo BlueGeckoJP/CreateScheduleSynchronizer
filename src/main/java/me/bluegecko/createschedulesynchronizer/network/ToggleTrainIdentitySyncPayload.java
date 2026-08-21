@@ -54,24 +54,7 @@ public record ToggleTrainIdentitySyncPayload(UUID syncId, boolean enabled) imple
 
             if (payload.enabled()) {
                 String name = data.getDisplayName(owner, payload.syncId());
-                Integer syncTrainColor = data.getSyncTrainColor(owner, payload.syncId());
-
-                if (syncTrainColor == null) {
-                    syncTrainColor =
-                            RunningTrainScheduleSync.findLinkedTrainColor(
-                                    player.serverLevel(),
-                                    owner,
-                                    payload.syncId()
-                            );
-
-                    if (syncTrainColor != null) {
-                        data.setSyncTrainColor(
-                                owner,
-                                payload.syncId(),
-                                syncTrainColor
-                        );
-                    }
-                }
+                int syncTrainColor = data.getSyncTrainColor(owner, payload.syncId());
 
                 if (name != null) {
                     RunningTrainScheduleSync.syncLinkedTrainIdentities(

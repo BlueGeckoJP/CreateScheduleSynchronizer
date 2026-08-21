@@ -97,20 +97,8 @@ public final class ScheduleCompatibility {
         }
 
         String scheduleName = data.getDisplayName(owner, syncId);
-        Integer syncTrainColor = data.getSyncTrainColor(owner, syncId);
+        int syncTrainColor = data.getSyncTrainColor(owner, syncId);
 
-        if (syncTrainColor == null) {
-            syncTrainColor = runtime.train.mapColorIndex;
-            data.setSyncTrainColor(owner, syncId, syncTrainColor);
-
-            return RunningTrainScheduleSync.syncLinkedTrainIdentities(
-                    level,
-                    owner,
-                    syncId,
-                    scheduleName,
-                    syncTrainColor
-            ) > 0;
-        }
 
         if (scheduleName == null || scheduleName.isBlank()) {
             return false;

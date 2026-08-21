@@ -17,7 +17,7 @@ class ScheduleSyncSavedData : SavedData() {
         var name: String,
         var scheduleTag: CompoundTag,
         var syncTrainIdentity: Boolean = false,
-        var syncTrainColor: Int? = null,
+        var syncTrainColor: Int = DEFAULT_SYNC_TRAIN_COLOR,
     )
 
     private val schedulesByOwner: MutableMap<UUID, MutableMap<UUID, StoredSchedule>> = linkedMapOf()
@@ -47,7 +47,7 @@ class ScheduleSyncSavedData : SavedData() {
             name = displayName,
             scheduleTag = scheduleTag.copy(),
             syncTrainIdentity = existing?.syncTrainIdentity ?: false,
-            syncTrainColor = existing?.syncTrainColor
+            syncTrainColor = existing?.syncTrainColor ?: DEFAULT_SYNC_TRAIN_COLOR
         )
 
         setDirty()
@@ -63,7 +63,7 @@ class ScheduleSyncSavedData : SavedData() {
 
     fun namedEntries(owner: UUID): List<ScheduleSyncEntry> {
         return schedulesOfOrNull(owner)?.map { (id, stored) ->
-            ScheduleSyncEntry(id, stored.name, stored.syncTrainIdentity)
+            ScheduleSyncEntry(id, stored.name, stored.syncTrainIdentity, stored.syncTrainColor)
         } ?: emptyList()
     }
 
@@ -112,8 +112,8 @@ class ScheduleSyncSavedData : SavedData() {
         return true
     }
 
-    fun getSyncTrainColor(owner: UUID, id: UUID): Int? =
-        schedulesOfOrNull(owner)?.get(id)?.syncTrainColor
+    fun getSyncTrainColor(owner: UUID, id: UUID): Int =
+        schedulesOfOrNull(owner)?.get(id)?.syncTrainColor ?: DEFAULT_SYNC_TRAIN_COLOR
 
     fun setSyncTrainColor(owner: UUID, id: UUID, color: Int): Boolean {
         val stored = schedulesOfOrNull(owner)?.get(id) ?: return false
@@ -141,9 +141,7 @@ class ScheduleSyncSavedData : SavedData() {
                 entry.putString("Name", stored.name)
                 entry.put("Schedule", stored.scheduleTag.copy())
                 entry.putBoolean("SyncTrainIdentity", stored.syncTrainIdentity)
-                stored.syncTrainColor?.let {
-                    entry.putInt("SyncTrainColor", it)
-                }
+                entry.putInt("SyncTrainColor", stored.syncTrainColor)
                 schedulesList.add(entry)
             }
 
@@ -157,6 +155,7 @@ class ScheduleSyncSavedData : SavedData() {
 
     companion object {
         private const val DATA_NAME = Createschedulesynchronizer.ID + "_schedule_sync"
+        private const val DEFAULT_SYNC_TRAIN_COLOR = 0
 
         @JvmStatic
         fun get(level: ServerLevel): ScheduleSyncSavedData {
@@ -221,7 +220,7 @@ class ScheduleSyncSavedData : SavedData() {
                             if (entry.contains("SyncTrainColor", Tag.TAG_INT.toInt())) {
                                 entry.getInt("SyncTrainColor")
                             } else {
-                                null
+                                DEFAULT_SYNC_TRAIN_COLOR
                             },
                     )
                 }

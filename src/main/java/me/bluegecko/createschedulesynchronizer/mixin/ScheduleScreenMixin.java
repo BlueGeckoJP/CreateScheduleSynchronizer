@@ -20,6 +20,7 @@ import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.spongepowered.asm.mixin.Mixin;
@@ -37,6 +38,26 @@ import java.util.UUID;
 
 @Mixin(value = ScheduleScreen.class, remap = false)
 public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<ScheduleMenu> implements RenameOverlayHandler {
+    @Unique
+    private static final DyeColor[] CSS_TRAIN_MAP_COLORS = {
+            DyeColor.WHITE,
+            DyeColor.BROWN,
+            DyeColor.LIME,
+            DyeColor.BLUE,
+            DyeColor.BLACK,
+            DyeColor.RED,
+            DyeColor.GREEN,
+            DyeColor.PURPLE,
+            DyeColor.GRAY,
+            DyeColor.ORANGE,
+            DyeColor.CYAN,
+            DyeColor.MAGENTA,
+            DyeColor.LIGHT_GRAY,
+            DyeColor.YELLOW,
+            DyeColor.LIGHT_BLUE,
+            DyeColor.PINK
+    };
+
     @Unique
     private static final int CSS_PANEL_WIDTH = 108;
     @Unique
@@ -60,7 +81,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     @Unique
     private static final int CSS_ID_LIST_X_OFFSET = 8;
     @Unique
-    private static final int CSS_ID_LIST_Y_OFFSET = 142;
+    private static final int CSS_ID_LIST_Y_OFFSET = 166;
     @Unique
     private static final int CSS_ID_ROW_HEIGHT = 10;
     @Unique
@@ -142,17 +163,21 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     @Unique
     private static final int CSS_CURRENT_TEXT_Y_OFFSET = 16;
     @Unique
-    private static final int CSS_LIST_TITLE_Y_OFFSET = 130;
+    private static final int CSS_LIST_TITLE_Y_OFFSET = 154;
     @Unique
     private static final int CSS_EMPTY_LIST_X_INSET = 44;
     @Unique
-    private static final int CSS_EMPTY_LIST_Y_OFFSET = 130;
+    private static final int CSS_EMPTY_LIST_Y_OFFSET = 154;
     @Unique
     private static final int CSS_ROW_HORIZONTAL_PADDING = 2;
     @Unique
     private static final int CSS_ROW_VERTICAL_PADDING = 1;
     @Unique
     private static final int CSS_TRAIN_IDENTITY_SYNC_BUTTON_Y_OFFSET = 104;
+    @Unique
+    private static final int CSS_TRAIN_COLOR_BUTTON_Y_OFFSET = 128;
+    @Unique
+    private static final int CSS_TRAIN_COLOR_COUNT = CSS_TRAIN_MAP_COLORS.length;
     @Unique
     private static final int CSS_COLOR_DISABLED_BUTTON = 0xFF303030;
     @Unique
@@ -165,6 +190,11 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     private EditBox css$renameEditBox;
     @Unique
     private UUID css$requestedTrainCountId;
+    @Unique
+    private UUID css$draftTrainColorId;
+    @Unique
+    private int css$draftTrainColor;
+
     @Shadow
     private Schedule schedule;
 
@@ -174,6 +204,13 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
             Component title
     ) {
         super(menu, inventory, title);
+    }
+
+    @Unique
+    private static DyeColor css$trainMapColor(int colorIndex) {
+        return CSS_TRAIN_MAP_COLORS[
+                Math.clamp(colorIndex, 0, CSS_TRAIN_COLOR_COUNT - 1)
+                ];
     }
 
     @Unique
@@ -243,6 +280,21 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
             AbstractContainerScreen<?> screen
     ) {
         return css$panelY(screen) + CSS_TRAIN_IDENTITY_SYNC_BUTTON_Y_OFFSET;
+    }
+
+    @Unique
+    private static int css$trainColorButtonX(AbstractContainerScreen<?> screen) {
+        return css$panelX(screen) + CSS_BUTTON_X_OFFSET;
+    }
+
+    @Unique
+    private static int css$trainColorButtonY(AbstractContainerScreen<?> screen) {
+        return css$panelY(screen) + CSS_TRAIN_COLOR_BUTTON_Y_OFFSET;
+    }
+
+    @Unique
+    private static int css$trainColorBorder(int color) {
+        return 0xFF000000 | css$trainMapColor(color).getTextureDiffuseColor();
     }
 
     @Unique
@@ -323,6 +375,27 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     @Unique
     private static int css$unlinkButtonY(AbstractContainerScreen<?> screen) {
         return css$panelY(screen) + CSS_UNLINK_BUTTON_Y_OFFSET;
+    }
+
+    @Unique
+    private int css$getDraftTrainColor(ScheduleSyncEntry entry) {
+        if (!entry.id().equals(css$draftTrainColorId)) {
+            css$draftTrainColorId = entry.id();
+            css$draftTrainColor = entry.syncTrainColor();
+        }
+
+        return css$draftTrainColor;
+    }
+
+    @Unique
+    private void css$cycleDraftTrainColor(
+            ScheduleSyncEntry entry,
+            int direction
+    ) {
+        css$draftTrainColor = Math.floorMod(
+                css$getDraftTrainColor(entry) + direction,
+                CSS_TRAIN_COLOR_COUNT
+        );
     }
 
     @Unique
@@ -521,6 +594,8 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         ScheduleSyncClientState.clear();
         css$idScrollOffset = 0;
         css$requestedTrainCountId = null;
+        css$draftTrainColorId = null;
+        css$draftTrainColor = 0;
         css$closeRenameOverlay();
 
         if (!css$isSyncScheduleScreen()) {
@@ -562,6 +637,28 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         }
 
         AbstractContainerScreen<?> screen = this;
+
+        ScheduleSyncEntry currentEntry = ScheduleSyncClientState.getCurrentEntry();
+        int trainColorButtonX = css$trainColorButtonX(screen);
+        int trainColorButtonY = css$trainColorButtonY(screen);
+
+        if (currentEntry != null
+                && scrollY != 0
+                && css$isInside(
+                mouseX,
+                mouseY,
+                trainColorButtonX,
+                trainColorButtonY,
+                CSS_BUTTON_WIDTH,
+                CSS_BUTTON_HEIGHT
+        )) {
+            css$cycleDraftTrainColor(
+                    currentEntry,
+                    scrollY < 0 ? 1 : -1
+            );
+            callback.setReturnValue(true);
+            return;
+        }
 
         int listX = css$idListX(screen);
         int listY = css$idListY(screen);
@@ -869,6 +966,57 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 trainIdentitySyncAvailable ? CSS_COLOR_WHITE : CSS_COLOR_DISABLED_TEXT
         );
 
+        int trainColorButtonX = css$trainColorButtonX(screen);
+        int trainColorButtonY = css$trainColorButtonY(screen);
+        boolean trainColorAvailable = currentEntry != null;
+        boolean trainColorHovered =
+                trainColorAvailable
+                        && css$isInside(
+                        mouseX,
+                        mouseY,
+                        trainColorButtonX,
+                        trainColorButtonY,
+                        CSS_BUTTON_WIDTH,
+                        CSS_BUTTON_HEIGHT
+                );
+
+        graphics.fill(
+                trainColorButtonX,
+                trainColorButtonY,
+                trainColorButtonX + CSS_BUTTON_WIDTH,
+                trainColorButtonY + CSS_BUTTON_HEIGHT,
+                !trainColorAvailable
+                        ? CSS_COLOR_DISABLED_TEXT
+                        : trainColorHovered
+                        ? CSS_COLOR_BUTTON_HOVERED
+                        : CSS_COLOR_BUTTON
+        );
+
+        graphics.renderOutline(
+                trainColorButtonX,
+                trainColorButtonY,
+                CSS_BUTTON_WIDTH,
+                CSS_BUTTON_HEIGHT,
+                trainColorAvailable
+                        ? css$trainColorBorder(
+                        css$getDraftTrainColor(currentEntry)
+                ) : CSS_COLOR_DISABLED_TEXT
+        );
+
+        Component trainColorText = trainColorAvailable
+                ? Component.translatable(
+                "color.minecraft." + css$trainMapColor(
+                        css$getDraftTrainColor(currentEntry)
+                ).getName())
+                : Component.literal("--");
+
+        graphics.drawCenteredString(
+                minecraft.font,
+                trainColorText,
+                trainColorButtonX + CSS_BUTTON_WIDTH / 2,
+                trainColorButtonY + CSS_BUTTON_TEXT_Y_OFFSET,
+                trainColorAvailable ? CSS_COLOR_WHITE : CSS_COLOR_DISABLED_TEXT
+        );
 
         css$clampIdScrollOffset(screen);
         List<ScheduleSyncEntry> entries = ScheduleSyncClientState.getEntries();
@@ -1063,7 +1211,15 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                 CSS_BUTTON_WIDTH,
                 CSS_BUTTON_HEIGHT
         )) {
-            PacketDistributor.sendToServer(new SaveScheduleSyncPayload(scheduleTag));
+            ScheduleSyncEntry currentEntry = ScheduleSyncClientState.getCurrentEntry();
+            int syncTrainColor = currentEntry == null ? SaveScheduleSyncPayload.UNCHANGED_TRAIN_COLOR : css$getDraftTrainColor(currentEntry);
+
+            PacketDistributor.sendToServer(
+                    new SaveScheduleSyncPayload(
+                            scheduleTag,
+                            syncTrainColor
+                    )
+            );
             callback.setReturnValue(true);
             return;
         }
@@ -1122,6 +1278,24 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
                     )
             );
 
+            callback.setReturnValue(true);
+            return;
+        }
+
+        int trainColorButtonX = css$trainColorButtonX(screen);
+        int trainColorButtonY = css$trainColorButtonY(screen);
+
+        if (button == CSS_PRIMARY_MOUSE_BUTTON
+                && currentEntry != null
+                && css$isInside(
+                mouseX,
+                mouseY,
+                trainColorButtonX,
+                trainColorButtonY,
+                CSS_BUTTON_WIDTH,
+                CSS_BUTTON_HEIGHT
+        )) {
+            css$cycleDraftTrainColor(currentEntry, 1);
             callback.setReturnValue(true);
             return;
         }

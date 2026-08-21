@@ -122,7 +122,7 @@ public final class RunningTrainScheduleSync {
             UUID owner,
             UUID syncId,
             String scheduleName,
-            Integer syncTrainColor
+            int syncTrainColor
     ) {
         if (scheduleName == null || scheduleName.isBlank()) {
             return 0;
@@ -156,13 +156,12 @@ public final class RunningTrainScheduleSync {
         return changed;
     }
 
-    public static boolean syncTrainIdentity(Train train, String scheduleName, Integer syncTrainColor) {
+    public static boolean syncTrainIdentity(Train train, String scheduleName, int syncTrainColor) {
         String name = scheduleName.trim();
 
         boolean nameChanged =
                 !name.isEmpty() && !train.name.getString().equals(name);
-        boolean colorChanged =
-                syncTrainColor != null && train.mapColorIndex != syncTrainColor;
+        boolean colorChanged = train.mapColorIndex != syncTrainColor;
 
         if (!nameChanged && !colorChanged) {
             return false;
@@ -186,28 +185,6 @@ public final class RunningTrainScheduleSync {
         );
 
         return true;
-    }
-
-    public static Integer findLinkedTrainColor(
-            ServerLevel level,
-            UUID owner,
-            UUID syncId
-    ) {
-        GlobalRailwayManager railways = Create.RAILWAYS.sided(level);
-
-        for (Train train : railways.trains.values()) {
-            ScheduleRuntime runtime = train.runtime;
-
-            if (!(runtime instanceof ScheduleSourceTracker tracker)) {
-                continue;
-            }
-
-            if (tracker.css$isSynchronizedSchedule() && owner.equals(tracker.css$getScheduleSyncOwner()) && syncId.equals(tracker.css$getScheduleSyncId())) {
-                return train.mapColorIndex;
-            }
-        }
-
-        return null;
     }
 
     public record ApplyResult(int applied, int queued) {

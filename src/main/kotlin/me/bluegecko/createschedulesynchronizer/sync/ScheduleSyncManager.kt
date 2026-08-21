@@ -79,12 +79,13 @@ object ScheduleSyncManager {
     }
 
     @JvmStatic
-    fun saveMainHandScheduleToStore(player: ServerPlayer, scheduleTag: CompoundTag): SaveResult {
+    fun saveMainHandScheduleToStore(player: ServerPlayer, scheduleTag: CompoundTag, syncTrainColor: Int): SaveResult {
         return saveItemScheduleTagToStore(
             stack = player.mainHandItem,
             level = player.serverLevel(),
             owner = player.uuid,
-            scheduleTag = scheduleTag
+            scheduleTag = scheduleTag,
+            syncTrainColor = syncTrainColor
         )
     }
 
@@ -93,7 +94,8 @@ object ScheduleSyncManager {
         stack: ItemStack,
         level: ServerLevel,
         owner: UUID,
-        scheduleTag: CompoundTag
+        scheduleTag: CompoundTag,
+        syncTrainColor: Int
     ): SaveResult {
         if (stack.item !is SynchronizedScheduleItem) {
             return SaveResult.NOT_SYNCHRONIZED_SCHEDULE
@@ -108,7 +110,13 @@ object ScheduleSyncManager {
 
         SynchronizedScheduleItem.setSyncOwner(stack, owner)
         stack.set(AllDataComponents.TRAIN_SCHEDULE, scheduleTag.copy())
-        ScheduleSyncSavedData.get(level).putScheduleTag(owner, syncId, normalized.copy())
+
+        val store = ScheduleSyncSavedData.get(level)
+        store.putScheduleTag(owner, syncId, normalized.copy())
+
+        if (syncTrainColor in 0..15) {
+            store.setSyncTrainColor(owner, syncId, syncTrainColor)
+        }
 
         RunningTrainScheduleSync.applyToLinkedTrains(
             level,
@@ -117,7 +125,6 @@ object ScheduleSyncManager {
             normalized.copy()
         )
 
-        val store = ScheduleSyncSavedData.get(level)
         if (store.isTrainIdentitySyncEnabled(owner, syncId)) {
             store.getDisplayName(owner, syncId)?.let { scheduleName ->
                 RunningTrainScheduleSync.syncLinkedTrainIdentities(
