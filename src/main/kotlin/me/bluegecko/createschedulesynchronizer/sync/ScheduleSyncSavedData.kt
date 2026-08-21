@@ -124,6 +124,7 @@ class ScheduleSyncSavedData : SavedData() {
                 entry.putUUID("Id", id)
                 entry.putString("Name", stored.name)
                 entry.put("Schedule", stored.scheduleTag.copy())
+                entry.putBoolean("SyncTrainName", stored.syncTrainName)
                 schedulesList.add(entry)
             }
 
@@ -190,7 +191,8 @@ class ScheduleSyncSavedData : SavedData() {
 
                     schedules[id] = StoredSchedule(
                         name = sanitizeDisplayName(rawName, id),
-                        scheduleTag = entry.getCompound("Schedule").copy()
+                        scheduleTag = entry.getCompound("Schedule").copy(),
+                        syncTrainName = entry.getBoolean("SyncTrainName"),
                     )
                 }
             }
