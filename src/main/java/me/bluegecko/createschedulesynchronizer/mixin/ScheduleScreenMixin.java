@@ -64,7 +64,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     @Unique
     private static final int CSS_ID_ROW_HEIGHT = 10;
     @Unique
-    private static final int CSS_VISIBLE_ID_ROWS = 4;
+    private static final int CSS_ID_LIST_BOTTOM_PADDING = 4;
     @Unique
     private static final int CSS_RENAME_EDIT_BOX_WIDTH = 220;
     @Unique
@@ -174,6 +174,15 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
             Component title
     ) {
         super(menu, inventory, title);
+    }
+
+    @Unique
+    private static int css$visibleIdRows(AbstractContainerScreen<?> screen) {
+        int panelBottom =
+                css$panelY(screen) + css$panelHeight(screen) - CSS_ID_LIST_BOTTOM_PADDING;
+        int availableHeight = panelBottom - css$idListY(screen);
+
+        return Math.max(0, availableHeight / css$idRowHeight());
     }
 
     @Unique
@@ -368,8 +377,8 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
     }
 
     @Unique
-    private void css$clampIdScrollOffset() {
-        int maxRows = CSS_VISIBLE_ID_ROWS;
+    private void css$clampIdScrollOffset(AbstractContainerScreen<?> screen) {
+        int maxRows = css$visibleIdRows(screen);
         int maxOffset = Math.max(0, ScheduleSyncClientState.getEntries().size() - maxRows);
         css$idScrollOffset = Math.clamp(css$idScrollOffset, 0, maxOffset);
     }
@@ -556,7 +565,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
 
         int listX = css$idListX(screen);
         int listY = css$idListY(screen);
-        int maxRows = CSS_VISIBLE_ID_ROWS;
+        int maxRows = css$visibleIdRows(screen);
         int listHeight = maxRows * css$idRowHeight();
 
         if (!css$isInside(
@@ -861,7 +870,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         );
 
 
-        css$clampIdScrollOffset();
+        css$clampIdScrollOffset(screen);
         List<ScheduleSyncEntry> entries = ScheduleSyncClientState.getEntries();
 
         graphics.drawString(
@@ -876,7 +885,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         int listX = css$idListX(screen);
         int listY = css$idListY(screen);
 
-        int maxRows = CSS_VISIBLE_ID_ROWS;
+        int maxRows = css$visibleIdRows(screen);
         int visibleCount = Math.clamp(entries.size() - css$idScrollOffset, 0, maxRows);
 
         for (int row = 0; row < visibleCount; row++) {
@@ -1122,7 +1131,7 @@ public abstract class ScheduleScreenMixin extends AbstractSimiContainerScreen<Sc
         int listX = css$idListX(screen);
         int listY = css$idListY(screen);
 
-        int maxRows = CSS_VISIBLE_ID_ROWS;
+        int maxRows = css$visibleIdRows(screen);
         int visibleCount = Math.clamp(entries.size() - css$idScrollOffset, 0, maxRows);
 
         for (int row = 0; row < visibleCount; row++) {
