@@ -102,6 +102,14 @@ public final class ScheduleCompatibility {
         if (syncTrainColor == null) {
             syncTrainColor = runtime.train.mapColorIndex;
             data.setSyncTrainColor(owner, syncId, syncTrainColor);
+
+            return RunningTrainScheduleSync.syncLinkedTrainIdentities(
+                    level,
+                    owner,
+                    syncId,
+                    scheduleName,
+                    syncTrainColor
+            ) > 0;
         }
 
         if (scheduleName == null || scheduleName.isBlank()) {
