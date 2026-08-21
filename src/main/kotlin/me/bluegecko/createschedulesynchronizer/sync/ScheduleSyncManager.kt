@@ -117,6 +117,18 @@ object ScheduleSyncManager {
             normalized.copy()
         )
 
+        val store = ScheduleSyncSavedData.get(level)
+        if (store.isTrainNameSyncEnabled(owner, syncId)) {
+            store.getDisplayName(owner, syncId)?.let { scheduleName ->
+                RunningTrainScheduleSync.syncLinkedTrainNames(
+                    level,
+                    owner,
+                    syncId,
+                    scheduleName
+                )
+            }
+        }
+
         return SaveResult.SAVED
     }
 
@@ -148,6 +160,19 @@ object ScheduleSyncManager {
             syncId,
             normalized.copy()
         )
+
+        val store = ScheduleSyncSavedData.get(level)
+        if (store.isTrainNameSyncEnabled(owner, syncId)) {
+            store.getDisplayName(owner, syncId)?.let { scheduleName ->
+                RunningTrainScheduleSync.syncLinkedTrainNames(
+                    level,
+                    owner,
+                    syncId,
+                    scheduleName
+                )
+            }
+        }
+
 
         return SaveResult.SAVED
     }

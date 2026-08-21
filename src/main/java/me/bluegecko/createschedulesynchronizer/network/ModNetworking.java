@@ -76,5 +76,11 @@ public final class ModNetworking {
                 ScheduleSyncTrainCountPayload.STREAM_CODEC,
                 ScheduleSyncTrainCountPayload::handle
         );
+
+        registrar.playToServer(
+                ToggleTrainNameSyncPayload.TYPE,
+                ToggleTrainNameSyncPayload.STREAM_CODEC,
+                ToggleTrainNameSyncPayload::handle
+        );
     }
 }

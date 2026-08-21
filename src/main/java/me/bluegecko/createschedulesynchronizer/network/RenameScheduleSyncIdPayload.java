@@ -1,6 +1,7 @@
 package me.bluegecko.createschedulesynchronizer.network;
 
 import me.bluegecko.createschedulesynchronizer.Createschedulesynchronizer;
+import me.bluegecko.createschedulesynchronizer.compat.RunningTrainScheduleSync;
 import me.bluegecko.createschedulesynchronizer.item.SynchronizedScheduleItem;
 import me.bluegecko.createschedulesynchronizer.sync.ScheduleSyncSavedData;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -55,8 +56,19 @@ public record RenameScheduleSyncIdPayload(UUID syncId, String name) implements C
             }
 
             data.setDisplayName(owner, payload.syncId(), payload.name());
-
             String displayName = data.getDisplayName(owner, payload.syncId());
+
+            if (data.isTrainNameSyncEnabled(owner, payload.syncId())) {
+                if (displayName != null) {
+                    RunningTrainScheduleSync.syncLinkedTrainNames(
+                            player.serverLevel(),
+                            owner,
+                            payload.syncId(),
+                            displayName
+                    );
+                }
+            }
+
 
             ItemStack stack = player.getMainHandItem();
             UUID currentId = SynchronizedScheduleItem.getSyncId(stack);

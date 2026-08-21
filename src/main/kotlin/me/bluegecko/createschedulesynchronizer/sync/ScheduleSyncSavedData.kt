@@ -16,6 +16,7 @@ class ScheduleSyncSavedData : SavedData() {
     data class StoredSchedule(
         var name: String,
         var scheduleTag: CompoundTag,
+        var syncTrainName: Boolean = false,
     )
 
     private val schedulesByOwner: MutableMap<UUID, MutableMap<UUID, StoredSchedule>> = linkedMapOf()
@@ -43,7 +44,8 @@ class ScheduleSyncSavedData : SavedData() {
 
         schedules[id] = StoredSchedule(
             name = displayName,
-            scheduleTag = scheduleTag.copy()
+            scheduleTag = scheduleTag.copy(),
+            syncTrainName = existing?.syncTrainName ?: false,
         )
 
         setDirty()
@@ -59,7 +61,7 @@ class ScheduleSyncSavedData : SavedData() {
 
     fun namedEntries(owner: UUID): List<ScheduleSyncEntry> {
         return schedulesOfOrNull(owner)?.map { (id, stored) ->
-            ScheduleSyncEntry(id, stored.name)
+            ScheduleSyncEntry(id, stored.name, stored.syncTrainName)
         } ?: emptyList()
     }
 
@@ -92,6 +94,20 @@ class ScheduleSyncSavedData : SavedData() {
         name: String? = null
     ) {
         putScheduleTag(owner, id, schedule.write(registries), name)
+    }
+
+    fun isTrainNameSyncEnabled(owner: UUID, id: UUID): Boolean =
+        schedulesOfOrNull(owner)?.get(id)?.syncTrainName ?: false
+
+    fun setTrainNameSyncEnabled(owner: UUID, id: UUID, enabled: Boolean): Boolean {
+        val stored = schedulesOfOrNull(owner)?.get(id) ?: return false
+
+        if (stored.syncTrainName != enabled) {
+            stored.syncTrainName = enabled
+            setDirty()
+        }
+
+        return true
     }
 
     override fun save(tag: CompoundTag, registries: HolderLookup.Provider): CompoundTag {
@@ -204,5 +220,4 @@ class ScheduleSyncSavedData : SavedData() {
             }
         }
     }
-
 }

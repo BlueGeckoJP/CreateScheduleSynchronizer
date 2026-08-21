@@ -5,10 +5,13 @@ import com.simibubi.create.content.trains.GlobalRailwayManager;
 import com.simibubi.create.content.trains.entity.Train;
 import com.simibubi.create.content.trains.schedule.Schedule;
 import com.simibubi.create.content.trains.schedule.ScheduleRuntime;
+import com.simibubi.create.content.trains.station.TrainEditPacket;
 import me.bluegecko.createschedulesynchronizer.sync.ScheduleTagSanitizer;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.UUID;
 
@@ -112,6 +115,65 @@ public final class RunningTrainScheduleSync {
 
         runtime.setSchedule(schedule, auto);
         tracker.css$setSynchronizedScheduleSource(owner, syncId);
+    }
+
+    public static int syncLinkedTrainNames(
+            ServerLevel level,
+            UUID owner,
+            UUID syncId,
+            String scheduleName
+    ) {
+        if (scheduleName == null || scheduleName.isBlank()) {
+            return 0;
+        }
+
+        GlobalRailwayManager railways = Create.RAILWAYS.sided(level);
+        int renamed = 0;
+
+        for (Train train : railways.trains.values()) {
+            ScheduleRuntime runtime = train.runtime;
+
+            if (!(runtime instanceof ScheduleSourceTracker tracker)) {
+                continue;
+            }
+
+            if (!tracker.css$isSynchronizedSchedule()
+                    || !owner.equals(tracker.css$getScheduleSyncOwner())
+                    || !syncId.equals(tracker.css$getScheduleSyncId())) {
+                continue;
+            }
+
+            if (syncTrainName(train, scheduleName)) {
+                renamed++;
+            }
+        }
+
+        if (renamed > 0) {
+            railways.markTracksDirty();
+        }
+
+        return renamed;
+    }
+
+    public static boolean syncTrainName(Train train, String scheduleName) {
+        String name = scheduleName.trim();
+
+        if (name.isEmpty() || train.name.getString().equals(name)) {
+            return false;
+        }
+
+        train.name = Component.literal(name);
+
+        PacketDistributor.sendToAllPlayers(
+                new TrainEditPacket.TrainEditReturnPacket(
+                        train.id,
+                        name,
+                        train.icon.getId(),
+                        train.mapColorIndex
+                )
+        );
+
+        return true;
     }
 
     public record ApplyResult(int applied, int queued) {

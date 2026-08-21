@@ -1,8 +1,11 @@
 package me.bluegecko.createschedulesynchronizer.compat;
 
+import com.simibubi.create.Create;
 import com.simibubi.create.content.trains.schedule.ScheduleItem;
+import com.simibubi.create.content.trains.schedule.ScheduleRuntime;
 import me.bluegecko.createschedulesynchronizer.item.SynchronizedScheduleItem;
 import me.bluegecko.createschedulesynchronizer.sync.ScheduleSyncManager;
+import me.bluegecko.createschedulesynchronizer.sync.ScheduleSyncSavedData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
@@ -59,5 +62,55 @@ public final class ScheduleCompatibility {
             ItemStack source
     ) {
         ((ScheduleSourceTracker) runtime).css$setScheduleSource(source);
+    }
+
+    /*
+     * Immediately after a schedule is assigned to a train,
+     * update the train name if name synchronization is enabled
+     *
+     * Manual renames are not monitored, so the player-defined name will be,
+     * preserved until this process is called again
+     */
+    public static boolean syncTrainNameAfterScheduleApplied(
+            ScheduleRuntime runtime,
+            ServerLevel level
+    ) {
+        if (!(runtime instanceof ScheduleSourceTracker tracker)) {
+            return false;
+        }
+
+        if (!tracker.css$isSynchronizedSchedule()) {
+            return false;
+        }
+
+        UUID owner = tracker.css$getScheduleSyncOwner();
+        UUID syncId = tracker.css$getScheduleSyncId();
+
+        if (owner == null || syncId == null) {
+            return false;
+        }
+
+        ScheduleSyncSavedData data = ScheduleSyncSavedData.get(level);
+
+        if (!data.isTrainNameSyncEnabled(owner, syncId)) {
+            return false;
+        }
+
+        String scheduleName = data.getDisplayName(owner, syncId);
+
+        if (scheduleName == null || scheduleName.isBlank()) {
+            return false;
+        }
+
+        boolean renamed = RunningTrainScheduleSync.syncTrainName(
+                runtime.train,
+                scheduleName
+        );
+
+        if (renamed) {
+            Create.RAILWAYS.sided(level).markTracksDirty();
+        }
+
+        return renamed;
     }
 }

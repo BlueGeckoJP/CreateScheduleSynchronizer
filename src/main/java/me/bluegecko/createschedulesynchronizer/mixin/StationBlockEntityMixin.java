@@ -92,5 +92,14 @@ public abstract class StationBlockEntityMixin {
         );
 
         runtime.setSchedule(schedule, auto);
+
+        Level level = ((BlockEntity) (Object) this).getLevel();
+
+        if (level instanceof ServerLevel serverLevel) {
+            ScheduleCompatibility.syncTrainNameAfterScheduleApplied(
+                    runtime,
+                    serverLevel
+            );
+        }
     }
 }

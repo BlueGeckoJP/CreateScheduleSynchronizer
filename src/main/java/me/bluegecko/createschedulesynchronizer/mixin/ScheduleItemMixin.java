@@ -46,5 +46,12 @@ public abstract class ScheduleItemMixin {
     ) {
         ScheduleCompatibility.rememberSource(runtime, source);
         runtime.setSchedule(schedule, auto);
+
+        if (player.level() instanceof ServerLevel serverLevel) {
+            ScheduleCompatibility.syncTrainNameAfterScheduleApplied(
+                    runtime,
+                    serverLevel
+            );
+        }
     }
 }
